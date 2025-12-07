@@ -85,7 +85,7 @@ const BalancePage = () => {
         setLoading(true);
         setError(null);
         // 首先调用获取钱包信息API
-        const walletResponse = await fetch('/api/public/walletmanagement/getwalletinfo', {
+        const walletResponse = await fetch('/api/walletmanagement/getwalletinfo', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -95,16 +95,17 @@ const BalancePage = () => {
           throw new Error(`获取钱包信息失败: ${walletResponse.status}`);
         }
         const walletData: WalletInfoResponse = await walletResponse.json();       
-        if (walletData.success && walletData.data) {
-          // 设置余额和冻结金额
+        if (walletData.code === 200 && walletData.success && walletData.data) {
+          // 设置余额、冻结金额和总余额
           setBalance(walletData.data.availableBalance || 0);
           setFrozenBalance(walletData.data.frozenBalance || 0);
+          setTotalBalance(walletData.data.totalBalance || 0);
         } else {
           throw new Error(walletData.message || '获取钱包信息失败');
         }
         
         // 然后调用获取交易记录API
-        const transactionResponse = await fetch('/api/public/walletmanagement/transactionrecord', {
+        const transactionResponse = await fetch('/api/walletmanagement/transactionrecord', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -123,7 +124,7 @@ const BalancePage = () => {
         if (transactionResponse.ok) {
           const transactionData: TransactionResponse = await transactionResponse.json();
           
-          if (transactionData.success && transactionData.data) {
+          if (transactionData.code === 200 && transactionData.success && transactionData.data) {
             // 确保交易记录按创建时间排序（最新的在前）
             const sortedTransactions = [...transactionData.data.list].sort((a, b) => 
               new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
@@ -131,12 +132,13 @@ const BalancePage = () => {
             // 只保留最新的20条记录
             const latestTransactions = sortedTransactions.slice(0, 20);
             setTransactions(latestTransactions);
+          } else {
+            console.warn('获取交易记录失败:', transactionData.message);
           }
         } else {
-          console.warn('获取交易记录失败');
+          console.warn('获取交易记录失败:', transactionResponse.status);
         }
       } catch (error) {
-        console.error('获取数据失败:', error);
         setError(error instanceof Error ? error.message : '获取数据失败，请稍后重试');
       } finally {
         setLoading(false);
@@ -185,7 +187,7 @@ const BalancePage = () => {
   const handleViewTransaction = (transaction: TransactionRecord) => {
     // 使用状态管理或localStorage传递数据
     localStorage.setItem('transactionData', JSON.stringify(transaction));
-    router.push(`/publisher/balance/transaction-details/${transaction.orderNo}` as any);
+    router.push(`/publisher/balance/transactionDetails/${transaction.orderNo}` as any);
   };
 
   // 从createTime中提取日期和时间
@@ -201,7 +203,7 @@ const BalancePage = () => {
   const handleViewAllTransactions = () => {
     console.log('查看全部资金流水');
     // 跳转到交易详情页面
-    router.push('/publisher/balance/transaction-list' as any);
+    router.push('/publisher/balance/transactionList' as any);
   };
 
   return (
@@ -215,7 +217,7 @@ const BalancePage = () => {
             <div className="mb-10 grid grid-cols-3 gap-2">
               <div className="text-center bg-green-500 rounded-lg p-2">
                 <div>总余额:</div>
-                <div>{totalBalance.toFixed(2)}</div>
+                <div>{totalBalance}</div>
               </div>
               <div className="text-center bg-green-500 rounded-lg p-2">
                 <div>可用余额:</div>
@@ -240,12 +242,6 @@ const BalancePage = () => {
               >
                 全部明细
               </Button>
-              <Button 
-                onClick={handleViewAllTransactions}
-                className="bg-blue-700 text-white flex-1 border-none rounded-full"
-              >
-                刷新
-              </Button>
             </div>
           </div>
         </Card>
@@ -256,19 +252,19 @@ const BalancePage = () => {
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="grid w-full grid-cols-3 border-b border-gray-100">
             <button 
-              className={`py-2 px-4 text-sm ${activeTab === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+              className={`py-2 px-4 text-sm ${activeTab === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}
               onClick={() => setActiveTab('all')}
             >
               全部明细
             </button>
             <button 
-              className={`py-2 px-4 text-sm ${activeTab === 'recharge' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+              className={`py-2 px-4 text-sm ${activeTab === 'recharge' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}
               onClick={() => setActiveTab('recharge')}
             >
               收入明细
             </button>
             <button 
-              className={`py-2 px-4 text-sm ${activeTab === 'withdraw' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+              className={`py-2 px-4 text-sm ${activeTab === 'withdraw' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}
               onClick={() => setActiveTab('withdraw')}
             >
               支出明细
@@ -282,7 +278,7 @@ const BalancePage = () => {
             // 加载状态 - 优化为显示8个骨架屏，更接近实际内容数量
             <div className="px-4 py-3">
               <div className="flex justify-between items-center mb-2">
-                <div className="text-xs text-gray-500 animate-pulse">加载中...</div>
+                <div className="text-xs  animate-pulse">加载中...</div>
                 <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
               </div>
               <div className="space-y-4">
@@ -308,7 +304,7 @@ const BalancePage = () => {
             <div className="py-12 px-4 text-center">
               <div className="text-5xl mb-3">⚠️</div>
               <h3 className="text-lg font-medium text-gray-800 mb-1">获取失败</h3>
-              <p className="text-gray-500 text-sm mb-4">{error}</p>
+              <p className=" text-sm mb-4">{error}</p>
               <Button
                 onClick={() => window.location.reload()}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -321,14 +317,14 @@ const BalancePage = () => {
             <div className="py-12 px-4 text-center">
               <div className="text-5xl mb-3">📝</div>
               <h3 className="text-lg font-medium text-gray-800 mb-1">暂无交易记录</h3>
-              <p className="text-gray-500 text-sm mb-4">您还没有任何交易记录</p>
+              <p className=" text-sm mb-4">您还没有任何交易记录</p>
             </div>
           ) : (
             // 根据当前tab过滤交易记录 - 显示最多20条最新记录
             <div>
               {/* 显示交易记录总数信息 */}
               <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs ">
                   共显示最新的 {transactions.filter(t => {
                     const isIncome = t.amount > 0;
                     if (activeTab === 'recharge') return isIncome;
@@ -378,10 +374,10 @@ const BalancePage = () => {
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs ">
                             {formatDate(date)} {time}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs ">
                             余额: {transaction.afterBalance.toFixed(2)}
                           </div>
                         </div>
@@ -395,7 +391,7 @@ const BalancePage = () => {
       </div>
 
       {/* 底部提示 */}
-      <div className="px-4 py-4 text-center text-xs text-gray-500">
+      <div className="px-4 py-4 text-center text-xs ">
         <div>
           <p>交易记录保存期限为12个月</p>
         </div>

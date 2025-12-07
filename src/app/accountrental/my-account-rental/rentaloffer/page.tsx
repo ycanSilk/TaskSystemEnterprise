@@ -80,6 +80,11 @@ const RentalOfferPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RentalOfferData | null>(null);
   const [pagination, setPagination] = useState({ page: 0, size: 20 });
+  
+  // 下架原因选择框相关状态
+  const [cancelModalVisible, setCancelModalVisible] = useState<boolean>(false);
+  const [selectedCancelReason, setSelectedCancelReason] = useState<string>('');
+  const [currentOfferId, setCurrentOfferId] = useState<string>('');
 
   // 选项卡配置 - 确保顺序正确，默认激活第一个(已发布)
   const tabItems: TabsProps['items'] = [
@@ -102,10 +107,7 @@ const RentalOfferPage = () => {
     try {
       // 获取当前选项卡对应的status参数
       const currentStatus = tabStatusMap[activeTab] || 'ACTIVE';
-      
-      console.log(`获取出租信息 - status: ${currentStatus}`);
-      
-      const response = await fetch('/api/public/rental/mypublishrentalinfolist', {
+      const response = await fetch('/api/rental/mypublishrentalinfolist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,6 +199,52 @@ const RentalOfferPage = () => {
     // 实际项目中这里应该根据筛选条件过滤出租信息
     console.log('应用筛选条件');
   };
+  
+  // 处理关闭下架原因选择框
+  const handleCancelModalClose = () => {
+    setCancelModalVisible(false);
+    setSelectedCancelReason('');
+    setCurrentOfferId('');
+  };
+  
+  // 处理确认下架
+  const handleConfirmCancel = async () => {
+    if (!selectedCancelReason || !currentOfferId) return;
+    
+    try {
+      // 将参数通过URL传递而不是body
+      const response = await fetch(`/api/rental/cancelleasrentaleinfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          leaseInfoId: currentOfferId,
+          reason: selectedCancelReason,
+        }),
+      });
+      console.log('leaseInfoId:', currentOfferId);
+      console.log('reason:', selectedCancelReason);
+      const responseData = await response.json();
+      console.log('这是取消出租API的日志输出:');
+      console.log('返回的状态:', response.status);
+      console.log('返回的原始数据', responseData);
+      
+      if (response.ok && responseData.success) {
+        message.success('下架成功');
+        // 关闭弹窗
+        handleCancelModalClose();
+        // 刷新数据列表
+        fetchRentalOffers();
+      } else {
+        const errorMsg = responseData.message || '下架失败，请稍后重试';
+        message.error(errorMsg);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : '网络异常，请稍后重试';
+      message.error(errorMsg);
+    }
+  };
 
   // 处理联系客服
   const handleContactService = (offerId: string) => {
@@ -207,7 +255,15 @@ const RentalOfferPage = () => {
   // 处理出租操作
   const handleOfferAction = (offerId: string, action: string) => {
     console.log(`出租 ${offerId} 执行操作: ${action}`);
-    alert(`出租 ${offerId} 执行 ${action} 操作`);
+    
+    if (action === '下架') {
+      // 显示下架原因选择框
+      setCurrentOfferId(offerId);
+      setSelectedCancelReason('');
+      setCancelModalVisible(true);
+    } else {
+      alert(`出租 ${offerId} 执行 ${action} 操作`);
+    }
   };
 
   // 由于API已经根据status返回了对应的数据，不需要在前端再次过滤
@@ -315,16 +371,14 @@ const RentalOfferPage = () => {
             <Space>
               <Button
                 type="default"
-                icon={<PhoneOutlined />}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleContactService(offer.id);
                 }}
                 size="small"
-                style={{ borderColor: '#000' }}
               >
-                客服
+                联系客服
               </Button>
 
               {/* 根据状态显示不同按钮 */}
@@ -338,7 +392,7 @@ const RentalOfferPage = () => {
                       handleOfferAction(offer.id, '编辑出租');
                     }} 
                     size="small"
-                    style={{ borderColor: '#000' }}
+                    className="whitespace-nowrap bg-blue-500 text-white"
                   >
                     编辑出租
                   </Button>                       
@@ -347,12 +401,10 @@ const RentalOfferPage = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (confirm('确定要下架该出租信息吗？')) {
-                        handleOfferAction(offer.id, '下架');
-                      }
+                      handleOfferAction(offer.id, '下架');                  
                     }}
                     size="small"
-                    style={{ borderColor: '#000' }}
+                    className="whitespace-nowrap bg-red-500 text-white"
                   >
                     下架
                   </Button>
@@ -460,20 +512,61 @@ const RentalOfferPage = () => {
             <div>
               <h4 className="text-sm text-black mb-2">时间区间</h4>
               <Radio.Group className="w-full">
-                <Space direction="vertical" className="w-full">
+                <Space orientation="vertical" className="w-full">
                   <Radio value="1">1个月内</Radio>
                   <Radio value="3">3个月内</Radio>
                   <Radio value="6">6个月内</Radio>
                 </Space>
               </Radio.Group>
             </div>
-            
-
-            
             <div className="flex items-center gap-4 mt-4">
               <DatePicker className="flex-1" placeholder="起始时间" />
               <span>-</span>
               <DatePicker className="flex-1" placeholder="终止时间" />
+            </div>
+          </div>
+        </ConfigProvider>
+      </Modal>
+      
+      {/* 下架原因选择弹窗 */}
+      <Modal
+        title="请选择下架原因"
+        open={cancelModalVisible}
+        onCancel={handleCancelModalClose}
+        footer={null}
+        destroyOnHidden
+      >
+        <ConfigProvider locale={zhCN}>
+          <div>
+            <div className="mb-4">
+              <Radio.Group 
+                className="w-full"
+                value={selectedCancelReason}
+                onChange={(e) => setSelectedCancelReason(e.target.value)}
+              >
+                <Space orientation="vertical" className="w-full">
+                  <Radio value="不想租赁了">不想租赁了</Radio>
+                  <Radio value="信息错误">信息错误</Radio>
+                  <Radio value="其他">其他</Radio>
+                </Space>
+              </Radio.Group>
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <Button 
+                size="small" 
+                onClick={handleCancelModalClose}
+              >
+                关闭
+              </Button>
+              <Button 
+                size="small" 
+                type="primary" 
+                onClick={handleConfirmCancel}
+                disabled={!selectedCancelReason}
+              >
+                确认下架
+              </Button>
             </div>
           </div>
         </ConfigProvider>

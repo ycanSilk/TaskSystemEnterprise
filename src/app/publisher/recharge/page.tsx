@@ -67,16 +67,16 @@ export default function PublisherFinancePage() {
     showAlert('成功', '截图上传成功', '✅');
   };
   
-  // 实时验证金额
+  // 验证金额 - 仅在提交时调用
   const validateAmount = (value: string) => {
     if (!value) return { isValid: false, message: '请输入充值金额' };
     
     const amount = Number(value);
     if (isNaN(amount)) return { isValid: false, message: '请输入有效的数字' };
     if (amount <= 0) return { isValid: false, message: '充值金额必须大于0' };
-    if (amount < 10) return { isValid: false, message: '最低充值金额为10元' };
+    if (amount < 100) return { isValid: false, message: '最低充值金额为100元' };
+    if (amount % 100 !== 0) return { isValid: false, message: '充值金额必须是100的倍数' };
     if (amount > 100000) return { isValid: false, message: '单次充值金额不能超过100000元' };
-    if (!Number.isInteger(amount * 100)) return { isValid: false, message: '请输入最多两位小数' };
     
     return { isValid: true, message: '' };
   };
@@ -104,15 +104,11 @@ export default function PublisherFinancePage() {
       // 由于是模拟环境，我们直接返回文件名作为路径
       // 实际项目中应该调用文件上传API
       const filePath = `/uploads/rechargeImages/${fileName}`;
-      
-      // 模拟API延迟
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('文件上传成功:', { fileName, filePath, size: file.size, type: file.type });
       return filePath;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '文件上传失败';
-      console.error('文件上传错误:', error);
+
       showAlert('上传失败', errorMessage, '❌');
       throw error;
     } finally {
@@ -186,10 +182,7 @@ export default function PublisherFinancePage() {
   const fetchFinanceData = async () => {
     try {
       setLoading(true);
-      console.log('开始获取财务数据（调用API）');
-      
-      // 调用交易记录API
-      const response = await fetch('/api/public/walletmanagement/transactionrecord', {
+      const response = await fetch('/api/walletmanagement/transactionrecord', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,8 +194,7 @@ export default function PublisherFinancePage() {
       });
       
       const result = await response.json();
-      
-      console.log('交易记录API响应:', result);
+
       if (result.success) {
          // 兼容不同API响应结构，从data.list、data或list中获取交易记录数组，并确保是数组类型
          const rawTransactions = result.data?.list || result.data || result.list || [];
@@ -210,15 +202,14 @@ export default function PublisherFinancePage() {
          // 筛选出transactionType或type为RECHARGE的记录
          const rechargeTransactions = allTransactions.filter((record: any) => record.transactionType === 'RECHARGE' || record.type === 'RECHARGE');
           
-         // 本地存储
-         localStorage.setItem('transactionRecords', JSON.stringify(allTransactions));
+
+
           
          // 转换API字段为UI使用的字段
          const convertedTransactions = rechargeTransactions.map((record: any) => ({
            id: record.orderNo || `txn${Date.now()}`,
            userId: record.userId || '',
            type: record.transactionType || record.type || 'RECHARGE',
-           expenseType: record.businessType || record.expenseType,
            amount: parseFloat(record.amount) || 0,
            time: record.createTime || record.time || new Date().toISOString(),
            method: record.channel || record.method || 'ALIPAY',
@@ -260,7 +251,7 @@ export default function PublisherFinancePage() {
           showAlert('错误', '加载交易记录失败', '❌');
         } 
         } catch (error) {
-          console.error('获取财务数据失败:', error);
+    
           showAlert('错误', '加载数据失败', '❌');
         } finally {
           setLoading(false);
@@ -296,7 +287,7 @@ export default function PublisherFinancePage() {
       setScreenshotPath(screenshotPath);
       
       // 调用充值API
-      const response = await fetch('/api/public/walletmanagement/usersrecharge', {
+      const response = await fetch('/api/walletmanagement/usersrecharge', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -307,8 +298,7 @@ export default function PublisherFinancePage() {
           remark: screenshotPath
         }),
       });    
-       console.log('开始处理充值请求', `充值金额${ amount } 充值方式${ selectedPaymentMethod } 支付截图${ screenshotPath }`);
-      console.log('url:/api/public/walletmanagement/usersrecharge');
+
       // 检查响应状态
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -337,10 +327,12 @@ export default function PublisherFinancePage() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '充值失败';
-      console.error('充值失败:', error);
+
       showAlert('错误', `${errorMessage}，请稍后重试`, '❌');
     } finally {
       setLoading(false);
+      // 无论充值成功还是失败，都刷新页面
+      router.refresh();
     }
   };
 
@@ -360,16 +352,19 @@ export default function PublisherFinancePage() {
   };
   
   // 跳转到交易详情页
-  const handleTransactionClick = (transactionId: string) => {
-    router.push(`/publisher/transactions/${transactionId}`);
+  const handleTransactionClick = (transaction: any) => {
+    try {
+      // 直接跳转到详情页，详情页将通过API获取数据
+      router.push(`/publisher/recharge/rechargeDetail/${transaction.id}`);
+    } catch (error) {
+      // 静默处理错误，不输出日志
+    }
   };
 
   const getTransactionColor = (type: string) => {
     switch (type) {
       case 'recharge': return 'text-green-600';
-      case 'withdraw': return 'text-blue-600';
-      case 'expense': return 'text-red-600';
-      default: return 'text-gray-600';
+      default: return 'text-green-600';
     }
   };
 
@@ -426,24 +421,12 @@ export default function PublisherFinancePage() {
                     type="number"
                     placeholder="请输入充值金额"
                     value={rechargeAmount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setRechargeAmount(value);
-                      if (value) {
-                        const validation = validateAmount(value);
-                        if (!validation.isValid) {
-                          showAlert('输入错误', validation.message, '⚠️');
-                        }
-                      }
-                    }}
-                    className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${rechargeAmount && !validateAmount(rechargeAmount).isValid ? 'border-red-500' : 'border-gray-300'}`}
+                    onChange={(e) => setRechargeAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 border-gray-300"
                   />
                 </div>
-                {rechargeAmount && !validateAmount(rechargeAmount).isValid && (
-                  <p className="text-xs text-red-500 mt-1">{validateAmount(rechargeAmount).message}</p>
-                )}
                 <div className="text-xs text-gray-500 mt-1">
-                  最低充值：¥100 | 单次最高：¥2000
+                  最低充值：¥100 | 必须为100的倍数 | 单次最高：¥2000
                 </div>
               </div>
 
@@ -518,7 +501,7 @@ export default function PublisherFinancePage() {
                             setScreenshotPreview('');
                             setScreenshotPath('');
                           }}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full hover:bg-red-600 transition-colors"
                           aria-label="删除截图"
                         >
                           ✕
@@ -611,7 +594,7 @@ export default function PublisherFinancePage() {
           <div className="mx-4 mt-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="p-4 border-b">
-                <h3 className="font-bold text-gray-800">交易记录</h3>
+                <h3 className="font-bold text-gray-800">充值记录</h3>
               </div>
               
               {/* 记录内容 */}
@@ -637,22 +620,21 @@ export default function PublisherFinancePage() {
                               className="border-b last:border-0"
                             >
                               <button
-                                onClick={() => handleTransactionClick(record.id)}
+                                onClick={() => handleTransactionClick(record)}
                                 className="w-full p-4 hover:bg-gray-50 transition-colors flex justify-between items-center"
                               >
                                 {/* 左侧：图标、标题、描述 */}
                                 <div className="flex items-center space-x-3">
-                                  <div className="rounded-full items-center  w-12 h-12 bg-orange-400 flex items-center justify-center">
-                                    <div className="flex items-center justify-center text-white text-3xl">
+                                  <div className="rounded-full items-center  w-10 h-10 bg-orange-400 flex items-center justify-center">
+                                    <div className="flex items-center justify-center text-white text-2xl">
                                       {getTransactionIcon(record.type, record.expenseType)}
                                     </div>
                                   </div>
                                   <div className="text-left">
-                         
-                                    <div className="text-lg ">
-                                      {record.expenseType === 'task_publish' ? '任务发布' : ''}
+                                    <div className="">
+                                      {record.type === 'RECHARGE' ? '充值' : ''}
                                     </div>
-                                    <div className="text-sm text-gray-500 mt-1">
+                                    <div className="">
                                       {new Date(record.time).toLocaleDateString('zh-CN', { 
                                         year: 'numeric',
                                         month: '2-digit', 
@@ -665,12 +647,9 @@ export default function PublisherFinancePage() {
                                 </div>
                                 
                                 {/* 右侧：金额和余额 */}
-                                <div className="text-right">
-                                  <div className={` text-lg ${getTransactionColor(record.type)}`}>
+                                <div className="text-right ">
+                                  <div className={` ${getTransactionColor(record.type)} text-green-600`}>
                                     {record.amount > 0 ? '+' : ''}{Math.abs(record.amount).toFixed(2)}
-                                  </div>
-                                  <div className="text-sm text-gray-500 mt-1">
-                                    余额 {record.balanceAfter || balance.balance}元
                                   </div>
                                 </div>
                               </button>
@@ -688,10 +667,10 @@ export default function PublisherFinancePage() {
               {/* 查看更多按钮 - 支付宝风格 */}
               <div className="border-t">
                 <button
-                  onClick={() => router.push('/publisher/transactions')}
+                  onClick={() => router.push('/publisher/recharge/rechargeList')}
                   className="w-full p-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center"
                 >
-                  <span className="text-sm text-blue-500">查看更多交易记录</span>
+                  <span className="text-sm text-blue-500">查看全部充值记录</span>
                   <svg className="w-4 h-4 ml-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>

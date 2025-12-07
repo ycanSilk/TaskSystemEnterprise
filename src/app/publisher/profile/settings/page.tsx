@@ -50,7 +50,7 @@ export default function PersonalInfoPage() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/user/getuserinfo', {
+        const response = await fetch('/api/users/getuserinfo', {
           method: 'GET',
           headers: {
             'Accept': 'application/json'
@@ -63,11 +63,6 @@ export default function PersonalInfoPage() {
         }
         
         const result = await response.json() as ApiResponse;
-        
-        // 打印完整的响应数据，用于调试
-        console.log('完整的API响应数据:', result);
-        
-        // 处理后端返回的数据结构
         if (result.code === 200 && result.data && result.data.userInfo) {
           // 从userInfo对象中提取数据
           const apiUserData = result.data.userInfo;
@@ -85,7 +80,6 @@ export default function PersonalInfoPage() {
           };
           
           setUserProfile(mappedUserProfile);
-          console.log('映射后的用户信息:', mappedUserProfile);
         } else {
           setError(result.message || '获取用户信息失败');
           console.warn('API响应数据不符合预期:', result);
@@ -181,8 +175,8 @@ export default function PersonalInfoPage() {
       className="p-4 border-b border-gray-100 flex justify-between items-center"
       onClick={() => openEditModal(field, label, placeholder)}
     >
-      <span className="text-gray-800">{label}</span>
-      <div className="flex items-center text-gray-500">
+      <span className="">{label}</span>
+      <div className="flex items-center ">
         <span className="mr-2 whitespace-nowrap">{value}</span>
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -226,7 +220,7 @@ export default function PersonalInfoPage() {
             }
           }}
         >
-          <span className="text-gray-800">头像</span>
+          <span className="">头像</span>
           <div className="flex items-center">
             <div className="relative mr-2">
               <img 
@@ -244,7 +238,7 @@ export default function PersonalInfoPage() {
                 <span className="text-white text-sm">更换</span>
               </div>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 " fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </div>
@@ -267,8 +261,8 @@ export default function PersonalInfoPage() {
 
         {/* 账号类型 */}
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-          <span className="text-gray-800">账号类型</span>
-          <div className="text-gray-500">
+          <span className="">账号类型</span>
+          <div className="">
             {userProfile.userType || '未设置'}
           </div>
         </div>
@@ -276,14 +270,14 @@ export default function PersonalInfoPage() {
         {/* 用户ID */}
         {userProfile.id && (
           <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-            <span className="text-gray-800">用户ID</span>
-            <div className="text-gray-500">
+            <div className="w-1/4">用户ID</div>
+            <div className="w-3/4">
               {userProfile.id || 'NULL'}
             </div>
           </div>
         )}
 
-        <div onClick={() => router.push('/publisher/profile/changepwd')} className="p-4 border-b border-gray-100  justify-between text-center items-center cursor-pointer hover:bg-blue-200">
+        <div onClick={() => router.push('/publisher/profile/changepwd')} className="p-4 border-b border-gray-100  justify-between text-center items-center cursor-pointer bg-blue-200 hover:bg-blue-200">
             修改密码
         </div>
 

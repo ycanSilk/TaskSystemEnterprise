@@ -53,7 +53,7 @@ const BindAlipayPage: React.FC = () => {
       
       try {
         // 调用后端绑定支付宝接口
-        const response = await fetch('/api/public/walletmanagement/bindalipay', {
+        const response = await fetch('/api/walletmanagement/bindalipay', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

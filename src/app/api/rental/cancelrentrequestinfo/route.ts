@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   }
   
   // 构造请求URL，将orderId和reason参数添加到URL中
-  const apiUrl = `http://localhost:8083/api/rental/rent/${rentRequestId}/cancel?reason=${encodeURIComponent(reason)}`;
+  const apiUrl = `http://localhost:8083/api/rental/rent/${rentRequestId}/cancel?reason=${reason}`;
   
   // 直接调用外部API并返回原始响应
   try {

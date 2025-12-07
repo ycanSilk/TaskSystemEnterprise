@@ -21,9 +21,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 解析请求体
     const requestData: RechargeRequest = await request.json();
-    console.log('开始处理充值请求', `充值金额${ requestData.amount } 充值方式${ requestData.channel } 支付截图${ requestData.remark }`);
-
-    // 从Cookie获取admin_token
     let token = '';
     try {
       const cookieStore = await cookies();
@@ -48,7 +45,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 构建外部API请求
     const apiUrl = `${config.baseUrl}${config.endpoints.wallet.usersrecharge}`;
-    console.log('外部API充值请求URL:', apiUrl);
     const requestHeaders: HeadersInit = {
       ...config.headers,
       'Authorization': `Bearer ${token}`
@@ -64,20 +60,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 解析外部API响应
     const result = await response.json();
-    console.log("这是获取个人用户列表的后端API返回的日志输出:");
-    console.log("请求url:", apiUrl);
-    console.log("请求token:", token);
-    console.log("请求参数:", requestData);
-    console.log("响应状态:", response.status);
-    console.log("响应头:", response.headers);
-    console.log("返回的数据:", result);
-    
-    // 返回响应数据
+    console.log("充值成功:", result);
+
     return NextResponse.json(result, { status: response.status });
   } catch (error) {
     console.error('充值API调用失败:', error);
 
-    // 处理不同类型的错误
     let errorMessage = '服务器内部错误';
     let statusCode = 500;
 

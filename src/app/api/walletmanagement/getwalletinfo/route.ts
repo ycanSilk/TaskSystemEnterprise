@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   // 从Cookie获取token
   const cookieStore = await cookies();
-  const tokenKeys = ['commenter_token', 'user_token', 'auth_token', 'PublishTask_token', 'token'];
+  const tokenKeys = ['PublishTask_token'];
   let token: string | undefined;
   
   for (const key of tokenKeys) {
@@ -21,7 +21,7 @@ export async function GET() {
   
   // 简化API URL构建，直接拼接baseUrl和endpoint
   const apiUrl = `${config.baseUrl}${config.endpoints.wallet.walletinfo}`;
-  
+  console.log("这是获取钱包信息API请求URL:", apiUrl);
   // 直接调用外部API并返回原始响应
   const response = await fetch(apiUrl, {
     method: 'GET',

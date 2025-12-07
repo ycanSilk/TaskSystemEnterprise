@@ -53,11 +53,11 @@ export async function POST(request: Request) {
     
     // 获取原始响应数据
     const responseData = await response.json();
-    console.log('这是我作为出租方的订单API的日志输出:');
+    console.log('这是我租用的订单API的日志输出:');
     console.log('请求url', apiUrl);
     console.log('token:', token);
     console.log('返回的状态:', response.status);
-    console.log('返回的原始数据', responseData);
+    console.log('返回的原始数据', responseData.data);
     
     // 直接返回API的原始响应
     return NextResponse.json(responseData, { status: response.status });

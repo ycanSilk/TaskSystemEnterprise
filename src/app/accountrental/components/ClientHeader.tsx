@@ -72,17 +72,9 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
   const handleBack = () => {
     if (!pathname) return;
 
-    // 检查当前页面是否为指定的一级页面
+    // 只有当URL精确匹配这4个路径时，才返回publisher/dashboard
     if (firstLevelPages.includes(pathname)) {
-      // 如果是指定的一级页面，跳转到/commenter/hall
-      router.push('/commenter/hall');
-      return;
-    }
-
-    // 检查是否是my-account-rental下面的页面
-    if (pathname.startsWith('/accountrental/my-account-rental/')) {
-      // 跳转到/commenter/hall
-      router.push('/commenter/hall');
+      router.push('/publisher/dashboard?tab=overview');
       return;
     }
 
@@ -111,15 +103,13 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
       const parentPath = '/' + pathParts.slice(0, -1).join('/');
       router.push(parentPath);
     } else {
-      // 如果已经是一级路由，则跳转到/commenter/hall
-      router.push('/commenter/hall');
+      router.push('/publisher/dashboard?tab=overview');
     }
   };
 
   // 检查是否显示返回按钮
   const shouldShowBackButton = () => {
     if (!pathname) return false;
-    // 只在/accountrental下的子页面显示返回按钮
     return pathname.startsWith('/accountrental/') && pathname !== '/accountrental';
   };
 

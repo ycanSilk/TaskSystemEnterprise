@@ -36,10 +36,7 @@ export async function POST(request: Request) {
     endDate: requestData.endDate || "",
     page: requestData.page || 1,
     size: requestData.size || 20,
-    orderNo: requestData.orderNo || ""
   };
-  
-  // 简化API URL构建，直接拼接baseUrl和endpoint
   const apiUrl = `${config.baseUrl}${config.endpoints.wallet.transactionrecord}`;
   
   // 直接调用外部API并返回原始响应
@@ -52,21 +49,11 @@ export async function POST(request: Request) {
     },
     body: JSON.stringify(newRequestBody)
   });
-
+  console.log('获取交易记录响应状态:', newRequestBody.status);
     
     // 获取原始响应数据
     const responseData = await response.json();
-    console.log('这是获取交易记录API请求成功响应:src/app/api/public/walletmanagement/transactionrecord/route.ts');
-    console.log('请求url:', apiUrl);
-    console.log('请求token :Bearer ', token);
-    console.log('请求体:', JSON.stringify(newRequestBody));
-    console.log('响应状态:', response.status);
-    if (response.ok) {
-      console.log('响应体:', JSON.stringify(responseData));
-    }
-    
-
-    // 直接返回API的原始响应
+    console.log('获取交易记录成功');
     return NextResponse.json(responseData, { status: response.status });
   } catch (apiError) {
     return NextResponse.json({ 

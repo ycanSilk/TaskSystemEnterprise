@@ -34,6 +34,11 @@ export async function POST(request: Request) {
   // 构造请求URL，将orderId和reason参数添加到URL中
   const apiUrl = `http://localhost:8083/api/rental/lease/${leaseInfoId}/cancel?reason=${encodeURIComponent(reason)}`;
   
+  console.log('这是取消出租API的日志输出:');
+  console.log('请求url', apiUrl);
+  console.log('token:', token);
+  console.log('reason:', reason);
+  console.log('leaseInfoId:', leaseInfoId);
   // 直接调用外部API并返回原始响应
   try {
     const response = await fetch(apiUrl, {
@@ -46,8 +51,7 @@ export async function POST(request: Request) {
     // 获取原始响应数据
     const responseData = await response.json();
     console.log('这是取消出租API的日志输出:');
-    console.log('请求url', apiUrl);
-    console.log('token:', token);
+
     console.log('返回的状态:', response.status);
     console.log('返回的原始数据', responseData);
     

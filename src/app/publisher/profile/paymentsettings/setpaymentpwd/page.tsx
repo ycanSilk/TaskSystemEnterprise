@@ -53,7 +53,7 @@ const SetPaymentPasswordPage: React.FC = () => {
       const data = { securityPassword, confirmPassword };
       
       // 直接调用API
-      const response = await fetch('/api/public/walletmanagement/setpaymentpwd', {
+      const response = await fetch('/api/walletmanagement/setpaymentpwd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

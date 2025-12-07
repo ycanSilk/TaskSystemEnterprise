@@ -57,7 +57,7 @@ export default function PublisherProfilePage() {
           setLoading(true);
           setError(null);
           
-          const response = await fetch('/api/user/getuserinfo', {
+          const response = await fetch('/api/users/getuserinfo', {
             method: 'GET',
             headers: {
               'Accept': 'application/json'
@@ -70,10 +70,6 @@ export default function PublisherProfilePage() {
           }
           
           const result = await response.json() as ApiResponse;
-          
-          // 打印完整的响应数据，用于调试
-          console.log('完整的API响应数据:', result);
-          
           // 处理后端返回的数据结构
           if (result.code === 200 && result.data && result.data.userInfo) {
             // 从userInfo对象中提取数据
@@ -92,7 +88,6 @@ export default function PublisherProfilePage() {
             };
             
             setUserProfile(mappedUserProfile);
-            console.log('映射后的用户信息:', mappedUserProfile);
           } else {
             setError(result.message || '获取用户信息失败');
             console.warn('API响应数据不符合预期:', result);
