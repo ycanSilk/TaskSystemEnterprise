@@ -271,7 +271,7 @@ export default function PersonalInfoPage() {
         {userProfile.id && (
           <div className="p-4 border-b border-gray-100 flex justify-between items-center">
             <div className="w-1/4">用户ID</div>
-            <div className="w-3/4">
+            <div className="w-3/4 text-right">
               {userProfile.id || 'NULL'}
             </div>
           </div>

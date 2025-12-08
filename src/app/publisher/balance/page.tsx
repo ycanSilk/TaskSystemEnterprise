@@ -201,8 +201,6 @@ const BalancePage = () => {
 
   // 处理查看资金流水
   const handleViewAllTransactions = () => {
-    console.log('查看全部资金流水');
-    // 跳转到交易详情页面
     router.push('/publisher/balance/transactionList' as any);
   };
 

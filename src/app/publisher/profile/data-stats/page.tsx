@@ -80,21 +80,6 @@ export default function DataStatsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
-      {/* 顶部导航栏 */}
-      <div className="bg-white shadow-sm">
-        <div className="px-5 py-4 flex items-center">
-          <button 
-            onClick={handleBack}
-            className="text-gray-600 mr-4"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-lg font-medium text-gray-800">数据统计</h1>
-        </div>
-      </div>
-
       {/* 时间范围选择 */}
       <div className="mt-4 px-5">
         <div className="flex rounded-lg bg-white p-1 shadow-sm">

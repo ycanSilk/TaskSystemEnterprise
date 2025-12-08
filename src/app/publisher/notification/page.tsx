@@ -124,30 +124,10 @@ export default function NotificationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 顶部导航栏 */}
-      <div className="bg-white shadow-sm">
-        <div className="px-5 py-4 flex items-center">
-          <button 
-            onClick={handleBack}
-            className="text-gray-600 mr-4"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-lg font-medium text-gray-800">通知提醒</h1>
-          {unreadCount > 0 && (
-            <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50 mt-5">
       {/* 未读消息提示 */}
       {unreadCount > 0 && (
-        <div className="bg-orange-50 text-orange-700 px-4 py-2 text-sm">
+        <div className="bg-orange-200 text-red-500 px-4 py-2 text-sm">
           您有 {unreadCount} 条未读消息
         </div>
       )}

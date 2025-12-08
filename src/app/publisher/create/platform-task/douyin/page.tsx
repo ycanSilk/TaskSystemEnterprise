@@ -48,12 +48,12 @@ const TaskCard = ({ task, onClick }: { task: any, onClick: () => void }) => {
   return (
     <div 
       onClick={onClick}
-      className="bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer active:scale-95"
+      className="bg-white rounded-2xl px-5 py-3 shadow-sm border-2 border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer active:scale-95"
     >
       {/* 任务头部 */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-            <h3 className="font-bold text-gray-900 text-lg">{task.title}</h3>
+            <h3 className="font-bold text-lg">{task.title}</h3>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-orange-500">
@@ -63,9 +63,9 @@ const TaskCard = ({ task, onClick }: { task: any, onClick: () => void }) => {
       </div>
 
       {/* 任务描述 */}
-      <div className="mb-4">
-        <p className="text-gray-700 mb-2">{task.description}</p>
-        <p className="text-gray-500 text-sm">{task.requirements}</p>
+      <div className="mb-2">
+        <p className="">{task.description}</p>
+        <p className="text-gray-700 text-sm">{task.requirements}</p>
       </div>
 
       {/* 发布按钮 */}
@@ -99,10 +99,6 @@ export default function CreateTask() {
     setShowAlertModal(true);
   };
 
-  const handleBackToPlatforms = () => {
-    router.push('/publisher/create');
-  };
-
   const handleTaskClick = (task: any) => {
     // 处理任务选择
     if (task.id === 'comment_top') {
@@ -120,22 +116,10 @@ export default function CreateTask() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* 页面头部 */}
-      <div className="from-blue-500 to-purple-600 text-white mt-10">
-        <div className="flex items-center space-x-4 mb-2 px-4">
-            <button 
-            onClick={handleBackToPlatforms}
-            className="bg-white hover:bg-white hover:scale-105 text-white font-medium px-4 py-2 rounded-lg transition-all duration-300 shadow-sm flex items-center gap-2"
-            aria-label="返回"
-          >
-            <span className='text-blue-500'>← 返回选择任务</span>
-          </button> 
-        </div>
-      </div>
+    <div className="space-y-6 pb-10 mt-5">
 
       {/* 任务卡片列表 */}
-      <div className="px-4 space-y-4">
+      <div className="px-2 space-y-2">
         {TASK_TYPES.map((task) => (
           <TaskCard 
             key={task.id} 
@@ -146,7 +130,7 @@ export default function CreateTask() {
       </div>
 
       {/* 提示信息 */}
-      <div className="px-4 space-y-4">
+      <div className="px-2 space-y-2">
         <div className="bg-blue-50 rounded-2xl p-4">
           <div className="flex items-start space-x-3">
             <div>

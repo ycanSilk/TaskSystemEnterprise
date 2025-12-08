@@ -231,7 +231,7 @@ export default function PublisherProfilePage() {
             </div>
             <div>
               <span className="flex font-bold text-lg items-center">
-                {userProfile.name}
+                {userProfile.companyName}
               </span>
               <span className="flex text-sm opacity-80">{userProfile.phone}</span>
             </div>

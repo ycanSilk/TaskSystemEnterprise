@@ -215,7 +215,7 @@ const TransactionListPage = () => {
 
   // 处理查看交易详情
   const handleViewTransaction = (transactionId: string) => {
-    router.push(`/publisher/balance/transaction-details/${transactionId}`);
+    router.push(`/publisher/balance/transactionDetails/${transactionId}`);
   };
 
   // 返回上一页
@@ -232,8 +232,8 @@ const TransactionListPage = () => {
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all" className="text-sm">全部明细</TabsTrigger>
-              <TabsTrigger value="recharge" className="text-sm">充值记录</TabsTrigger>
-              <TabsTrigger value="withdraw" className="text-sm">消费记录</TabsTrigger>
+              <TabsTrigger value="recharge" className="text-sm">收入明细</TabsTrigger>
+              <TabsTrigger value="withdraw" className="text-sm">支出明细</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>

@@ -5,38 +5,25 @@ import { useParams, useRouter } from 'next/navigation';
 import { WalletOutlined } from '@ant-design/icons';
 import AlertModal from '@/components/ui/AlertModal';
 
-// 定义交易记录详情类型接口
-interface TransactionDetail {
-  id: string;
-  type: string;
+// 后端返回的交易记录类型接口
+interface TransactionRecord {
+  orderNo: string;
+  transactionType: string;
+  typeDescription: string;
   amount: number;
+  beforeBalance: number;
+  afterBalance: number;
   status: string;
-  method: string;
-  time: string;
-  orderId: string;
+  statusDescription: string;
   description: string;
-  // 额外的详情字段
-  transactionId?: string;
-  paymentMethod?: string;
-  currency?: string;
-  ipAddress?: string;
-  orderTime?: string;
-  completedTime?: string;
-  relatedId?: string;
-  expenseType?: string;
-  balanceAfterTransaction?: number;
-  // 自定义字段配置
-  customFields?: Array<{
-    label: string;
-    value: string | React.ReactNode;
-    show?: boolean;
-    className?: string;
-  }>;
+  channel: string;
+  createTime: string;
+  updateTime: string;
 }
 
 // 直接在页面中定义交易详情组件
 const TransactionDetailComponent: React.FC<{
-  transaction: TransactionDetail | null;
+  transaction: TransactionRecord | null;
   loading: boolean;
   showAlertModal: boolean;
   alertConfig: {
@@ -60,42 +47,7 @@ const TransactionDetailComponent: React.FC<{
   showAmountSection = true,
   showDetailsSection = true
 }) => {
-  // 获取交易类型文本
-  const getTransactionTypeText = (type: string) => {
-    switch (type) {
-      case 'RECHARGE':
-        return '充值';
-      default:
-        return type;
-    }
-  };
 
-  // 获取支付方式文本
-  const getPaymentMethodText = (method: string) => {
-    switch (method) {
-      case 'ALIPAY':
-        return '支付宝';
-      case 'USDT':
-        return 'USDT';
-      default:
-        return method;
-    }
-  };
-
-  // 获取状态文本
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'success':
-      case 'completed':
-        return '成功';
-      case 'pending':
-        return '处理中';
-      case 'failed':
-        return '失败';
-      default:
-        return status;
-    }
-  };
 
   // 获取状态颜色类
   const getStatusColorClass = (status: string) => {
@@ -147,7 +99,7 @@ const TransactionDetailComponent: React.FC<{
         {/* 金额区域 */}
         {showAmountSection && (
           <div className="p-8 flex flex-col items-center justify-center border-b">
-            <h2 className="text-lg  w-1/4 text-center mb-2">{getTransactionTypeText(transaction.type)}</h2>
+            <h2 className="text-lg  w-1/4 text-center mb-2">{transaction.typeDescription}</h2>
             <div className={`text-4xl font-bold ${getAmountColorClass(transaction.amount)}`}>
               {transaction.amount > 0 ? '+' : ''}{Math.abs(transaction.amount).toFixed(2)}
             </div>
@@ -160,19 +112,19 @@ const TransactionDetailComponent: React.FC<{
             <div className="space-y-4">
               <div className="flex pb-3 border-b">
                 <span className="w-1/4">交易时间</span>
-                <span className="w-3/4  text-right">{transaction.time || transaction.completedTime || '未知'}</span>
+                <span className="w-3/4  text-right">{transaction.createTime}</span>
               </div>
               <div className="flex pb-3 border-b">
                 <span className="w-1/4">交易类型</span>
-                <span className="w-3/4  text-right">{getTransactionTypeText(transaction.type)}</span>
+                <span className="w-3/4  text-right">{transaction.typeDescription}</span>
               </div>
              <div className="flex pb-3 border-b">
                 <span className="w-1/4">支付方式</span>
-                <span className="w-3/4  text-right">{getPaymentMethodText(transaction.method || transaction.paymentMethod || '未知')}</span>
+                <span className="w-3/4  text-right">{transaction.channel ? '支付宝' : '未知'}</span>
               </div>
               <div className="flex pb-3 border-b">
                 <span className=" w-1/4">交易编号</span>
-                <span className="w-3/4  text-right">{transaction.orderId || transaction.id}</span>
+                <span className="w-3/4  text-right">{transaction.orderNo}</span>
               </div>
             </div>
           </div>
@@ -195,7 +147,7 @@ export default function RechargeDetailPage() {
   const params = useParams();
   const id = params?.id as string || '';
   const router = useRouter();
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
+  const [transaction, setTransaction] = useState<TransactionRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -220,7 +172,7 @@ export default function RechargeDetailPage() {
     try {
       setLoading(true);
 
-      // 调用后端API获取交易记录
+      // 调用后端API获取交易记录，使用orderNo参数只获取指定订单
       const response = await fetch('/api/walletmanagement/transactionrecord', {
         method: 'POST',
         headers: {
@@ -228,42 +180,19 @@ export default function RechargeDetailPage() {
         },
         body: JSON.stringify({
           page: 1,
-          size: 100, // 获取足够多的记录以确保能找到目标记录
+          size: 1,
+          orderNo: id,
           transactionType: 'RECHARGE'
         }),
       });
       
       const result = await response.json();
       
-      if (result.success) {
-        // 兼容不同API响应结构
-        const rawTransactions = result.data?.list || result.data || result.list || [];
-        const allTransactions = Array.isArray(rawTransactions) ? rawTransactions : [];
-               // 查找匹配ID的交易记录
-        const foundTransaction = allTransactions.find((record: any) => 
-          (record.orderNo || record.id) === id && 
-          (record.transactionType === 'RECHARGE' || record.type === 'RECHARGE')
-        );
-        
-        if (foundTransaction) {
-          // 转换为详情页需要的格式
-          const transaction: TransactionDetail = {
-            id: foundTransaction.orderNo || foundTransaction.id,
-            type: foundTransaction.transactionType || foundTransaction.type || 'RECHARGE',
-            amount: parseFloat(foundTransaction.amount) || 0,
-            status: foundTransaction.status || 'RECHARGE',
-            method: foundTransaction.channel || foundTransaction.method || 'ALIPAY',
-            time: foundTransaction.createTime || foundTransaction.time || new Date().toISOString(),
-            orderId: foundTransaction.orderNo || foundTransaction.id,
-            description: foundTransaction.remark || '',
-            balanceAfterTransaction: parseFloat(foundTransaction.balanceAfter) || 0
-          };
-          setTransaction(transaction);
-        } else {
-          setTransaction(null);
-        }
+      if (result.code === 200 && result.success && result.data?.list?.length > 0) {
+        // 直接使用后端返回的第一条数据
+        setTransaction(result.data.list[0]);
       } else {
-        showAlert('获取失败', result.message || '网络错误，请稍后重试', '❌');
+        showAlert('获取失败', result.message || '未找到交易记录', '❌');
         setTransaction(null);
       }
 

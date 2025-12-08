@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     endDate: requestData.endDate || "",
     page: requestData.page || 1,
     size: requestData.size || 20,
+    orderNo: requestData.orderNo || "",
   };
   const apiUrl = `${config.baseUrl}${config.endpoints.wallet.transactionrecord}`;
   

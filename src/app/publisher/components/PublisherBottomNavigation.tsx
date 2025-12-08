@@ -21,7 +21,7 @@ export const PublisherBottomNavigation: React.FC = () => {
   const publisherNavigationItems: NavigationItem[] = [
     {
       icon: <FileOutlined />,
-      label: '评论订单',
+      label: '评论管理',
       path: '/publisher/dashboard'
     },
     {

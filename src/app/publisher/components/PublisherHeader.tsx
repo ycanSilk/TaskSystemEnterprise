@@ -6,10 +6,9 @@ import { LeftOutlined } from '@ant-design/icons';
 import { CustomerServiceButton } from '../../../components/button/CustomerServiceButton';
 import { BellOutlined } from '@ant-design/icons';
 import { 
-  getFlatRouteTitleMap, 
+  routeTitleMap,
   routeHierarchyMap, 
-  firstLevelPages,
-  dynamicRoutePatterns 
+  firstLevelPages
 } from '../config/routes';
 
 interface PublisherHeaderProps {
@@ -32,126 +31,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
   const [pageTitle, setPageTitle] = useState('发布者中心');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // 定义路由到标题的映射关系
-  const routeTitleMap: Record<string, string> = {
-    // 主页面
-    '/publisher': '发布者中心',
-    '/publisher/dashboard': '评论订单',
-    '/publisher/dashboard/active': '活跃任务',
-    '/publisher/dashboard/completed': '已完成任务',
-    '/publisher/dashboard/audit': '审核中任务',
-    '/publisher/dashboard/overview': '任务概览',
-    '/publisher/dashboard/task-detail': '任务详情',
-    '/publisher/dashboard/account-rental-detail': '账号租赁详情',
-    
-    // 发布任务相关
-    '/publisher/create/platformtype': '发布评论',
-    '/publisher/create/platform-task/douyin': '发布抖音评论',
-    '/publisher/create/publish-top-comment': '发布上评评论',
-    '/publisher/create/publish-nakahiro': '发布中评评论',
-    '/publisher/create/task-combination-middle-bottom': '发布中下评评论',
-    '/publisher/create/task-combination-top-middle': '发布上中评评论',
-    '/publisher/create/task-combination-all': '发布全类型评论',
-    '/publisher/create/search-keyword-task': '放大镜搜索',
-    '/publisher/create/supplementaryorder': '补充订单',
-    '/publisher/create/video-send': '视频发送',
-    '/publisher/create/video-task': '视频任务',
-    
-    // 个人中心相关
-    '/publisher/profile': '我的',
-    '/publisher/profile/data-stats': '数据统计',
-    '/publisher/profile/personal-info': '个人信息',
-    '/publisher/profile/settings': '个人资料',
-    '/publisher/profile/verification': '身份认证',
-    
-    // 订单相关
-    '/publisher/order-management': '订单管理选择',
-    '/publisher/orders': '订单管理',
-    '/publisher/orders/active': '活跃订单',
-    '/publisher/orders/task-detail': '订单详情',
-    '/publisher/orders/account-rental': '账号租赁订单',
-    
-    // 财务相关
-    '/publisher/balance': '余额',
-    '/publisher/balance/transaction-list': '余额记录',
-    '/publisher/balance/transaction-details': '账单详情',
-    '/publisher/finance': '充值',
-    '/publisher/transactions': '充值记录',
-    '/publisher/bank-cards': '银行卡管理',
-    '/publisher/bind-bank-card': '绑定银行卡',
-    
-    // 其他
-    '/publisher/notification': '通知提醒',
-    '/publisher/douyin-version': '下载中心',
-    '/publisher/stats': '统计报表',
-    '/publisher/tasks/history': '任务历史'
-  };
-
-  // 定义发布者模块的一级页面
-  const firstLevelPages = [
-    '/publisher',
-    '/publisher/dashboard',
-    '/publisher/profile',
-    '/publisher/order-management',
-    '/publisher/orders',
-    '/publisher/notification',
-    '/publisher/douyin-version',
-    '/publisher/finance',
-    '/publisher/transactions',
-    '/publisher/bank-cards',
-    '/publisher/stats',
-    '/publisher/tasks/history'
-  ];
-
-  // 定义路由层级关系和返回路径映射
-  const routeHierarchyMap: Record<string, string> = {
-    // 创建任务相关路由层级
-    '/publisher/create/platform-task/douyin': '/publisher/create/platformtype',
-    '/publisher/create/publish-top-comment': '/publisher/create/platform-task/douyin',
-    '/publisher/create/publish-nakahiro': '/publisher/create/platform-task/douyin',
-    '/publisher/create/task-combination-middle-bottom': '/publisher/create/platform-task/douyin',
-    '/publisher/create/task-combination-top-middle': '/publisher/create/platform-task/douyin',
-    '/publisher/create/task-combination-all': '/publisher/create/platform-task/douyin',
-    '/publisher/create/search-keyword-task': '/publisher/create/platform-task/douyin',
-    '/publisher/create/supplementaryorder': '/publisher/orders',
-    '/publisher/create/video-send': '/publisher/create/platform-task/douyin',
-    '/publisher/create/video-task': '/publisher/create/platform-task/douyin',
-    
-    // 订单相关路由层级
-    '/publisher/orders/task-detail': '/publisher/orders',
-    '/publisher/orders/task-detail/[id]': '/publisher/orders',
-    '/publisher/orders/active': '/publisher/orders',
-    '/publisher/orders/account-rental': '/publisher/orders',
-    '/publisher/orders/account-rental/[id]': '/publisher/orders/account-rental',
-    
-    // Dashboard相关路由层级
-    '/publisher/dashboard/active': '/publisher/dashboard',
-    '/publisher/dashboard/completed': '/publisher/dashboard',
-    '/publisher/dashboard/audit': '/publisher/dashboard',
-    '/publisher/dashboard/overview': '/publisher/dashboard',
-    '/publisher/dashboard/task-detail': '/publisher/dashboard',
-    '/publisher/dashboard/account-rental-detail': '/publisher/dashboard',
-    
-    // 个人资料相关路由层级
-    '/publisher/profile/data-stats': '/publisher/profile',
-    '/publisher/profile/personal-info': '/publisher/profile',
-    '/publisher/profile/settings': '/publisher/profile',
-    '/publisher/profile/verification': '/publisher/profile',
-    
-    // 财务相关路由层级
-    '/publisher/balance': '/publisher/profile',
-    '/publisher/balance/transaction-list': '/publisher/balance',
-    '/publisher/balance/transaction-details': '/publisher/balance/transaction-list',
-    '/publisher/balance/transaction-details/[id]': '/publisher/balance/transaction-list',
-    '/publisher/bank-cards': '/publisher/profile',
-    '/publisher/bank-cards/bank-cardlist': '/publisher/bank-cards',
-    '/publisher/bank-cards/bank-cardlist/[id]': '/publisher/bank-cards',
-    '/publisher/bind-bank-card': '/publisher/bank-cards',
-    
-    // 其他路由层级
-    '/publisher/transactions/[id]': '/publisher/transactions',
-    '/publisher/tasks/history': '/publisher/dashboard'
-  };
+  // 直接使用路由标题映射
 
   // 处理返回按钮点击事件
   const handleBack = () => {
@@ -176,17 +56,19 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
     // 处理动态路由（包含ID或特定格式的路径）
     const pathParts = pathWithoutQuery.split('/').filter(Boolean);
     if (pathParts.length > 0) {
-      // 检查动态路由模式
-      const dynamicPatterns = dynamicRoutePatterns;
-
-      for (const { pattern, target } of dynamicPatterns) {
-        if (pattern.test(pathParts.join('/'))) {
-          if (typeof target === 'function') {
-            router.push(target(pathParts.join('/')));
-          } else {
-            router.push(target);
+      // 检查是否有以当前路径前缀开头的动态路由映射
+      // 构建可能的父级路径模式，处理带参数的动态路由
+      for (let i = pathParts.length; i >= 2; i--) {
+        const basePath = '/' + pathParts.slice(0, i).join('/');
+        // 检查是否为动态路由（包含参数部分）
+        const hasDynamicParam = pathParts.length > i && !isNaN(Number(pathParts[i]));
+        if (hasDynamicParam) {
+          // 对于带参数的路由，尝试匹配基础路径
+          const parentPath = basePath;
+          if (routeHierarchyMap[parentPath]) {
+            router.push(routeHierarchyMap[parentPath]);
+            return;
           }
-          return;
         }
       }
 
@@ -275,22 +157,30 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
     
     // 在客户端计算页面标题
     if (pathname) {
+      // 1. 首先尝试完整路径匹配（包含查询参数）
+      const titleWithQuery = routeTitleMap[pathname];
+      if (titleWithQuery) {
+        setPageTitle(titleWithQuery as string);
+        return;
+      }
+      
       // 移除查询参数
       const pathWithoutQuery = pathname.split('?')[0];
       
-      // 1. 尝试精确匹配
-      if (routeTitleMap[pathWithoutQuery]) {
-        setPageTitle(routeTitleMap[pathWithoutQuery]);
+      // 2. 尝试精确匹配（不包含查询参数）
+      const titleExact = routeTitleMap[pathWithoutQuery];
+      if (titleExact) {
+        setPageTitle(titleExact as string);
         return;
       }
 
-      // 2. 优先匹配更长的路由模式，以避免匹配到更短的通用路径
+      // 3. 优先匹配更长的路由模式，以避免匹配到更短的通用路径
       const sortedRoutes = Object.entries(routeTitleMap).sort(([a], [b]) => b.length - a.length);
       
       // 处理动态路由的特殊逻辑
       const pathParts = pathWithoutQuery.split('/').filter(Boolean);
       
-      // 3. 处理带ID参数的动态路由
+      // 4. 处理带ID参数的动态路由
       for (const [route, title] of sortedRoutes) {
         // 检查是否是动态路由模式（包含[ID]或类似参数）
         if (route.includes('[id]')) {
@@ -301,33 +191,34 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
           const regexPattern = new RegExp(`^${dynamicRoutePattern}$`);
           
           if (regexPattern.test(pathWithoutQuery)) {
-            setPageTitle(title);
+            setPageTitle(title as string);
             return;
           }
         }
       }
       
-      // 4. 尝试前缀匹配（包含子路径的情况）
+      // 5. 尝试前缀匹配（包含子路径的情况）
       for (const [route, title] of sortedRoutes) {
         // 对于非动态路由，检查路径是否以该路由开头
         if (pathWithoutQuery.startsWith(route + '/')) {
-          setPageTitle(title);
+          setPageTitle(title as string);
           return;
         }
         // 检查路径是否完全包含该路由
         if (pathWithoutQuery.includes(route + '/')) {
-          setPageTitle(title);
+          setPageTitle(title as string);
           return;
         }
       }
       
-      // 5. 尝试基于路径段进行部分匹配
+      // 6. 尝试基于路径段进行部分匹配
       if (pathParts.length >= 3) {
         // 构建可能的父级路径段组合
         for (let i = pathParts.length; i >= 2; i--) {
           const partialPath = '/' + pathParts.slice(0, i).join('/');
-          if (routeTitleMap[partialPath]) {
-            setPageTitle(routeTitleMap[partialPath]);
+          const titlePartial = routeTitleMap[partialPath];
+          if (titlePartial) {
+            setPageTitle(titlePartial as string);
             return;
           }
         }
@@ -344,7 +235,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
         }
       }
       
-      // 6. 如果所有匹配都失败，根据主要目录设置默认标题
+      // 7. 如果所有匹配都失败，根据主要目录设置默认标题
       if (pathParts.length >= 2) {
         const mainCategory = pathParts[1];
         switch (mainCategory) {
@@ -362,6 +253,9 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
             break;
           case 'balance':
             setPageTitle('余额');
+            break;
+          case 'recharge':
+            setPageTitle('充值');
             break;
           case 'finance':
             setPageTitle('充值');
