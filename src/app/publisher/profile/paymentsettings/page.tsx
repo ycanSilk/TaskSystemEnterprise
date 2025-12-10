@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { ArrowLeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
+import { EncryptedLink } from '@/components/layout/EncryptedLink';
 
 const PaymentSettingsPage: React.FC = () => {
   // 支付设置菜单项数据
@@ -28,7 +28,7 @@ const PaymentSettingsPage: React.FC = () => {
               key={item.id}
               className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100"
             >
-              <Link 
+              <EncryptedLink 
                 href={item.id === 'order' 
                   ? '/publisher/profile/paymentsettings/bindalipay' 
                   : '/publisher/profile/paymentsettings/setpaymentpwd'}
@@ -43,7 +43,7 @@ const PaymentSettingsPage: React.FC = () => {
                     <RightOutlined className="w-4 h-4 text-gray-400 ml-1" />
                   )}
                 </button>
-              </Link>
+              </EncryptedLink>
             </div>
           ))}
         </div>

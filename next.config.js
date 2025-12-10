@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const TerserPlugin = require('terser-webpack-plugin');
 
 const nextConfig = {
   eslint: {
@@ -48,24 +49,36 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+          // 防止MIME类型嗅探
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // 防止点击劫持攻击
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // 启用XSS保护
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // 内容安全策略 (CSP) - 防止XSS和数据注入攻击
+        { 
+          key: 'Content-Security-Policy', 
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; frame-src 'self' https:; object-src 'none';"
+        },
+          // 严格传输安全 (HSTS) - 强制使用HTTPS
+          { 
+            key: 'Strict-Transport-Security', 
+            value: 'max-age=63072000; includeSubDomains; preload' 
           },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          // 引用策略 - 控制引用头信息
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        // 功能策略 - 控制浏览器API的使用
+        { 
+          key: 'Permissions-Policy', 
+          value: 'camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(), autoplay=()'
+        },
+        // 缓存策略 - 优化静态资源缓存
+        { 
+          key: 'Cache-Control', 
+          value: 'public, max-age=31536000, immutable' 
+        },
         ],
       },
     ];
@@ -74,6 +87,58 @@ const nextConfig = {
   env: {
     CUSTOM_APP_NAME: '抖音派单系统',
     CUSTOM_APP_VERSION: '2.0.0',
+  },
+  // 构建配置
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // 生产环境下启用代码混淆
+    if (!dev && !isServer) {
+      // 移除默认的TerserPlugin配置
+      config.optimization.minimizer = config.optimization.minimizer.filter(
+        (minimizer) => minimizer.constructor.name !== 'TerserPlugin'
+      );
+      
+      // 添加自定义的TerserPlugin配置
+      config.optimization.minimizer.push(
+        new TerserPlugin({
+          terserOptions: {
+            // 启用混淆
+            compress: {
+              // 删除控制台日志（可选）
+              drop_console: true,
+              // 删除调试器语句
+              drop_debugger: true,
+              // 其他压缩选项
+              passes: 2,
+            },
+            // 混淆选项
+            mangle: {
+              // 启用变量名混淆
+              toplevel: true,
+              // 启用函数名混淆
+              keep_fnames: false,
+              // 启用属性名混淆
+              keep_classnames: false,
+              // 自定义混淆后的变量名
+              reserved: ['$', 'jQuery', 'React', 'ReactDOM'],
+            },
+            // 输出选项
+            output: {
+              // 禁用注释
+              comments: false,
+              // 禁用格式化
+              beautify: false,
+              // 保留版权信息（可选）
+              // comments: /^!/,
+            },
+            // 启用source map（可选，生产环境建议关闭）
+            sourceMap: false,
+          },
+          // 并行处理
+          parallel: true,
+        })
+      );
+    }
+    return config;
   },
 };
 

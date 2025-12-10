@@ -10,6 +10,7 @@ import {
   routeHierarchyMap, 
   firstLevelPages
 } from '../config/routes';
+import { decryptRoute, isEncryptedRoute, encryptRoute } from '../../../lib/routeEncryption';
 
 interface PublisherHeaderProps {
   user?: {
@@ -30,6 +31,36 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
   const [isClient, setIsClient] = useState(false);
   const [pageTitle, setPageTitle] = useState('发布者中心');
   const [showDropdown, setShowDropdown] = useState(false);
+  
+  // 获取解密后的路径
+  const getDecryptedPath = (path: string) => {
+    if (!path) return path;
+    
+    const pathParts = path.split('/').filter(Boolean);
+    if (pathParts.length > 0 && isEncryptedRoute(pathParts[0])) {
+      try {
+        return decryptRoute(pathParts[0]);
+      } catch (error) {
+        console.error('Failed to decrypt route:', error);
+        return path;
+      }
+    }
+    return path;
+  };
+  
+  // 获取加密后的路径
+  const getEncryptedPath = (path: string) => {
+    if (!path) return path;
+    
+    const pathParts = path.split('/').filter(Boolean);
+    if (pathParts.length >= 2) {
+      const firstTwoLevels = `/${pathParts[0]}/${pathParts[1]}`;
+      const encrypted = encryptRoute(firstTwoLevels);
+      const remainingPath = pathParts.slice(2).join('/');
+      return `/${encrypted}${remainingPath ? `/${remainingPath}` : ''}`;
+    }
+    return path;
+  };
 
   // 直接使用路由标题映射
 
@@ -40,16 +71,20 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
     // 获取不包含查询参数的路径
     const pathWithoutQuery = pathname.split('?')[0];
     
+    // 解密路径以进行判断
+    const decryptedPath = getDecryptedPath(pathWithoutQuery);
+    const decryptedParts = decryptedPath.split('/').filter(Boolean);
+    
     // 检查当前页面是否为一级页面
-    if (firstLevelPages.includes(pathWithoutQuery)) {
+    if (firstLevelPages.includes(decryptedPath)) {
       // 如果是一级页面，返回发布者主页
-      router.push('/publisher/dashboard');
+      router.push(getEncryptedPath('/publisher/dashboard'));
       return;
     }
 
     // 检查是否有明确的层级映射（精确匹配）
-    if (routeHierarchyMap[pathWithoutQuery]) {
-      router.push(routeHierarchyMap[pathWithoutQuery]);
+    if (routeHierarchyMap[decryptedPath]) {
+      router.push(getEncryptedPath(routeHierarchyMap[decryptedPath]));
       return;
     }
 
@@ -148,8 +183,10 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
   // 检查是否显示返回按钮
   const shouldShowBackButton = () => {
     if (!pathname) return false;
+    // 解密路径以进行判断
+    const decryptedPath = getDecryptedPath(pathname);
     // 在首页不显示，在其他页面显示
-    return pathname !== '/publisher/dashboard' && pathname !== '/publisher';
+    return decryptedPath !== '/publisher/dashboard' && decryptedPath !== '/publisher';
   };
 
   useEffect(() => {
@@ -157,23 +194,25 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
     
     // 在客户端计算页面标题
     if (pathname) {
+      // 解密路径以进行标题匹配
+      const decryptedPath = getDecryptedPath(pathname);
+      const pathWithoutQuery = pathname.split('?')[0];
+      const decryptedPathWithoutQuery = decryptedPath.split('?')[0];
+      
       // 1. 首先尝试完整路径匹配（包含查询参数）
-      const titleWithQuery = routeTitleMap[pathname];
+      const titleWithQuery = routeTitleMap[pathname] || routeTitleMap[decryptedPath];
       if (titleWithQuery) {
         setPageTitle(titleWithQuery as string);
         return;
       }
       
-      // 移除查询参数
-      const pathWithoutQuery = pathname.split('?')[0];
-      
       // 2. 尝试精确匹配（不包含查询参数）
-      const titleExact = routeTitleMap[pathWithoutQuery];
+      const titleExact = routeTitleMap[pathWithoutQuery] || routeTitleMap[decryptedPathWithoutQuery];
       if (titleExact) {
         setPageTitle(titleExact as string);
         return;
       }
-
+      
       // 3. 优先匹配更长的路由模式，以避免匹配到更短的通用路径
       const sortedRoutes = Object.entries(routeTitleMap).sort(([a], [b]) => b.length - a.length);
       
@@ -190,7 +229,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
             .replace(/\//g, '\\/');
           const regexPattern = new RegExp(`^${dynamicRoutePattern}$`);
           
-          if (regexPattern.test(pathWithoutQuery)) {
+          if (regexPattern.test(pathWithoutQuery) || regexPattern.test(decryptedPath)) {
             setPageTitle(title as string);
             return;
           }
@@ -200,12 +239,12 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
       // 5. 尝试前缀匹配（包含子路径的情况）
       for (const [route, title] of sortedRoutes) {
         // 对于非动态路由，检查路径是否以该路由开头
-        if (pathWithoutQuery.startsWith(route + '/')) {
+        if (pathWithoutQuery.startsWith(route + '/') || decryptedPath.startsWith(route + '/')) {
           setPageTitle(title as string);
           return;
         }
         // 检查路径是否完全包含该路由
-        if (pathWithoutQuery.includes(route + '/')) {
+        if (pathWithoutQuery.includes(route + '/') || decryptedPath.includes(route + '/')) {
           setPageTitle(title as string);
           return;
         }
@@ -236,8 +275,9 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
       }
       
       // 7. 如果所有匹配都失败，根据主要目录设置默认标题
-      if (pathParts.length >= 2) {
-        const mainCategory = pathParts[1];
+      const decryptedParts = decryptedPath.split('/').filter(Boolean);
+      if (decryptedParts.length >= 2) {
+        const mainCategory = decryptedParts[1];
         switch (mainCategory) {
           case 'create':
             setPageTitle('发布任务');
@@ -299,7 +339,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
 
   const handleProfileClick = () => {
     setShowUserName(false); // 关闭下拉菜单
-    router.push('/publisher/profile/settings');
+    router.push(getEncryptedPath('/publisher/profile/settings'));
   };
 
   const handleLogoutClick = async () => {
@@ -388,7 +428,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
               {/* 个人中心按钮 */}
               <button 
                 onClick={() => {
-                  router.push('/commenter/profile/settings');
+                  router.push(getEncryptedPath('/publisher/profile/settings'));
                   setShowDropdown(false);
                 }}
                 className="w-full text-left px-4 py-3 border-b border-gray-100 text-gray-800 font-medium text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"

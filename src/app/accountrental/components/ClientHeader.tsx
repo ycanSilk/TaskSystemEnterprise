@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname,useRouter, useSearchParams } from 'next/navigation';
 import { CustomerServiceButton } from '../../../components/button/CustomerServiceButton';
 import { UserOutlined, LeftOutlined, BellOutlined } from '@ant-design/icons';
+import { decryptRoute, isEncryptedRoute, encryptRoute } from '../../../lib/routeEncryption';
 
 interface User {
   id: string;
@@ -32,6 +33,36 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   // 创建头像按钮的ref
   const avatarButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 获取解密后的路径
+  const getDecryptedPath = (path: string) => {
+    if (!path) return path;
+    
+    const pathParts = path.split('/').filter(Boolean);
+    if (pathParts.length > 0 && isEncryptedRoute(pathParts[0])) {
+      try {
+        return decryptRoute(pathParts[0]);
+      } catch (error) {
+        console.error('Failed to decrypt route:', error);
+        return path;
+      }
+    }
+    return path;
+  };
+
+  // 获取加密后的路径
+  const getEncryptedPath = (path: string) => {
+    if (!path) return path;
+    
+    const pathParts = path.split('/').filter(Boolean);
+    if (pathParts.length >= 2) {
+      const firstTwoLevels = `/${pathParts[0]}/${pathParts[1]}`;
+      const encrypted = encryptRoute(firstTwoLevels);
+      const remainingPath = pathParts.slice(2).join('/');
+      return `/${encrypted}${remainingPath ? `/${remainingPath}` : ''}`;
+    }
+    return path;
+  };
 
   // 定义路由到标题的映射关系
   const routeTitleMap: Record<string, string> = {
@@ -72,9 +103,12 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
   const handleBack = () => {
     if (!pathname) return;
 
+    const decryptedPath = getDecryptedPath(pathname);
+    const decryptedParts = decryptedPath.split('/').filter(Boolean);
+
     // 只有当URL精确匹配这4个路径时，才返回publisher/dashboard
-    if (firstLevelPages.includes(pathname)) {
-      router.push('/publisher/dashboard?tab=overview');
+    if (firstLevelPages.includes(decryptedPath)) {
+      router.push(getEncryptedPath('/publisher/dashboard?tab=overview'));
       return;
     }
 
@@ -90,27 +124,27 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
 
     // 检查当前路径是否匹配动态路由模式
     for (const [routePattern, targetPath] of Object.entries(dynamicRouteMap)) {
-      if (pathname.includes(routePattern)) {
+      if (decryptedPath.includes(routePattern)) {
         // 对于动态路由，返回到对应的列表页面
-        router.push(targetPath);
+        router.push(getEncryptedPath(targetPath));
         return;
       }
     }
 
     // 提取上一级路由路径
-    const pathParts = pathname.split('/').filter(Boolean);
-    if (pathParts.length > 1) {
-      const parentPath = '/' + pathParts.slice(0, -1).join('/');
-      router.push(parentPath);
+    if (decryptedParts.length > 1) {
+      const parentPath = '/' + decryptedParts.slice(0, -1).join('/');
+      router.push(getEncryptedPath(parentPath));
     } else {
-      router.push('/publisher/dashboard?tab=overview');
+      router.push(getEncryptedPath('/publisher/dashboard?tab=overview'));
     }
   };
 
   // 检查是否显示返回按钮
   const shouldShowBackButton = () => {
     if (!pathname) return false;
-    return pathname.startsWith('/accountrental/') && pathname !== '/accountrental';
+    const decryptedPath = getDecryptedPath(pathname);
+    return decryptedPath.startsWith('/accountrental/') && decryptedPath !== '/accountrental';
   };
 
   useEffect(() => {
@@ -118,14 +152,16 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
     
     // 在客户端计算页面标题
     if (pathname) {
+      const decryptedPath = getDecryptedPath(pathname);
+      
       // 尝试精确匹配
-      if (routeTitleMap[pathname]) {
-        setPageTitle(routeTitleMap[pathname]);
+      if (routeTitleMap[decryptedPath]) {
+        setPageTitle(routeTitleMap[decryptedPath]);
         return;
       }
 
       // 尝试匹配路径前缀（移除查询参数后的路径）
-      const pathWithoutQuery = pathname.split('?')[0];
+      const pathWithoutQuery = decryptedPath.split('?')[0];
       if (routeTitleMap[pathWithoutQuery]) {
         setPageTitle(routeTitleMap[pathWithoutQuery]);
         return;
@@ -166,7 +202,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
         const detailPathSegment = pathParts[pathParts.length - 2];
         for (const [route, title] of sortedRoutes) {
           if (route.includes(detailPathSegment)) {
-            setPageTitle(title);
+            setPageTitle(routeTitleMap[route]);
             return;
           }
         }
@@ -199,7 +235,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
   }, [showDropdown]);
 
   const handleDashboardClick = () => {  
-    router.push('/publisher/dashboard');
+    router.push(getEncryptedPath('/publisher/dashboard'));
   };
 
   const handleUserAvatarClick = () => {

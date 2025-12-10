@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { EncryptedLink } from './EncryptedLink';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { NavigationItem } from '@/types';
@@ -20,7 +20,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ items }) => 
           const isActive = pathname === item.path || item.active;
           
           return (
-                <Link
+                <EncryptedLink
                   key={index}
                   href={item.path as any}
                   className={cn(
@@ -42,7 +42,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ items }) => 
               )}>
                 {item.label}
               </span>
-            </Link>
+            </EncryptedLink>
           );
         })}
       </div>
