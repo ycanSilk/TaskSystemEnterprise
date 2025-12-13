@@ -12,11 +12,14 @@ export default function PublisherLayout({
 }) {
   const pathname = usePathname();
   
-  // 判断是否为登录页面
-  const isLoginPage = pathname?.includes('/auth/login');
-  
-  // 对于登录页面，直接渲染内容，不包含导航栏和头部
-  if (isLoginPage) {
+  // 判断是否为登录页面或认证相关页面
+  // 需要考虑加密后的路径，例如 /CRoXHkQADQYAShVYHw0/login
+  const isAuthPage = pathname?.includes('/auth/') || 
+                   pathname?.includes('/login') || 
+                   pathname?.includes('/register') || 
+                   pathname?.includes('/resetpwd');
+  // 对于认证页面，直接渲染内容，不包含导航栏和头部
+  if (isAuthPage) {
     return (
       <div className="min-h-screen bg-gray-50">
         {children}

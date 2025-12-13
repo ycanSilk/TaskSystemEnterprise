@@ -119,7 +119,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.error('登录响应数据无效');
       return NextResponse.json<ApiResponse>({
         success: false,
-        message: '登录失败，无效的响应数据'
+        message: result.message
       }, { status: 500 });
     }
 
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     
     // 关键日志
     console.log(`用户 ${requestData.username} 登录成功`);
-    console.log(`设置token信息: ${token}`);
+    console.log(`设置token信息: Bearer ${token}`);
     console.log(result);
     
     return successResponse;

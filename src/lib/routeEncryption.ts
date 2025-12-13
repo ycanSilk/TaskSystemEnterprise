@@ -23,7 +23,6 @@ const xorEncrypt = (text: string, key: string): string => {
  * @returns 加密后的路由路径
  */
 export const encryptRoute = (path: string): string => {
-  console.log('[路由加密] encryptRoute 被调用，路径:', path);
   // 移除开头的斜杠
   const pathWithoutSlash = path.startsWith('/') ? path.slice(1) : path;
   // 先使用XOR加密
@@ -32,7 +31,6 @@ export const encryptRoute = (path: string): string => {
   const encoded = Buffer.from(xorEncrypted, 'utf-8').toString('base64');
   // 替换URL中可能出现的特殊字符
   const result = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  console.log('[路由加密] encryptRoute 结果:', result);
   return result;
 };
 
@@ -42,7 +40,6 @@ export const encryptRoute = (path: string): string => {
  * @returns 原始路由路径
  */
 export const decryptRoute = (encryptedPath: string): string => {
-  console.log('[路由加密] decryptRoute 被调用，加密路径:', encryptedPath);
   // 还原Base64编码
   const padded = encryptedPath.padEnd(encryptedPath.length + (4 - encryptedPath.length % 4) % 4, '=');
   // 明确指定使用UTF-8解码
@@ -51,7 +48,6 @@ export const decryptRoute = (encryptedPath: string): string => {
   const decrypted = xorEncrypt(base64Decoded, SECRET_KEY);
   // 添加开头的斜杠
   const result = `/${decrypted}`;
-  console.log('[路由加密] decryptRoute 结果:', result);
   return result;
 };
 
@@ -61,47 +57,21 @@ export const decryptRoute = (encryptedPath: string): string => {
  * @returns 是否已加密
  */
 export const isEncryptedRoute = (path: string): boolean => {
-  console.log('[路由加密] isEncryptedRoute 被调用，路径:', path);
-  
   // 排除已知的静态资源路径
   const staticPaths = ['images', 'database', 'software', 'uploads', '_next', 'api'];
   if (staticPaths.includes(path)) {
-    console.log('[路由加密] isEncryptedRoute: 已知静态资源路径，返回false');
     return false;
   }
   
   // 排除已知的一级路由
   const knownRoutes = ['publisher', 'accountrental'];
   if (knownRoutes.includes(path)) {
-    console.log('[路由加密] isEncryptedRoute: 已知一级路由，返回false');
     return false;
   }
   
   // 检查是否符合Base64URL格式
   const base64UrlPattern = /^[A-Za-z0-9-_]+$/;
-  if (!base64UrlPattern.test(path)) {
-    console.log('[路由加密] isEncryptedRoute: 不符合Base64URL格式，返回false');
-    return false;
-  }
-  
-  // 尝试验解密，如果解密后的路径包含乱码或不符合预期格式，则认为不是加密路由
-  try {
-    const decrypted = decryptRoute(path);
-    console.log('[路由加密] isEncryptedRoute: 解密测试结果:', decrypted);
-    
-    // 检查解密后的路径是否包含预期的一级路由
-    const decryptedParts = decrypted.split('/').filter(Boolean);
-    if (decryptedParts.length > 0 && knownRoutes.includes(decryptedParts[0])) {
-      console.log('[路由加密] isEncryptedRoute: 解密后包含已知一级路由，返回true');
-      return true;
-    }
-    
-    console.log('[路由加密] isEncryptedRoute: 解密后不包含已知一级路由，返回false');
-    return false;
-  } catch (error) {
-    console.log('[路由加密] isEncryptedRoute: 解密测试失败，返回false:', error);
-    return false;
-  }
+  return base64UrlPattern.test(path);
 };
 
 /**
@@ -110,7 +80,6 @@ export const isEncryptedRoute = (path: string): boolean => {
  * @returns 加密后的URL
  */
 export const encryptUrlFirstTwoLevels = (url: string): string => {
-  console.log('[路由加密] encryptUrlFirstTwoLevels 被调用，URL:', url);
   try {
     const parsedUrl = new URL(url);
     const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
@@ -127,14 +96,10 @@ export const encryptUrlFirstTwoLevels = (url: string): string => {
       // 更新URL路径
       parsedUrl.pathname = newPath;
       const result = parsedUrl.toString();
-      console.log('[路由加密] encryptUrlFirstTwoLevels 结果:', result);
       return result;
     }
-    
-    console.log('[路由加密] encryptUrlFirstTwoLevels: pathParts.length < 2，返回原始URL');
     return url;
   } catch (error) {
-    console.error('[路由加密] URL加密失败:', error);
     return url;
   }
 };
@@ -145,7 +110,6 @@ export const encryptUrlFirstTwoLevels = (url: string): string => {
  * @returns 解密后的URL
  */
 export const decryptUrlFirstTwoLevels = (url: string): string => {
-  console.log('[路由加密] decryptUrlFirstTwoLevels 被调用，URL:', url);
   try {
     const parsedUrl = new URL(url);
     const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
@@ -160,14 +124,10 @@ export const decryptUrlFirstTwoLevels = (url: string): string => {
       // 更新URL路径
       parsedUrl.pathname = newPath;
       const result = parsedUrl.toString();
-      console.log('[路由加密] decryptUrlFirstTwoLevels 结果:', result);
       return result;
     }
-    
-    console.log('[路由加密] decryptUrlFirstTwoLevels: 未找到加密路由，返回原始URL');
     return url;
   } catch (error) {
-    console.error('[路由加密] URL解密失败:', error);
     return url;
   }
 };
