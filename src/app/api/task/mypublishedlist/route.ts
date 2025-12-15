@@ -11,8 +11,7 @@ export async function POST(request: Request) {
     // 1. 身份验证 - 简化token获取逻辑
     const cookieStore = await cookies();
     const token = cookieStore.get('PublishTask_token')?.value;
-    
-    console.log('token:', token);
+
     if (!token) {
       return NextResponse.json({ success: false, message: '认证失败，请先登录' }, { status: 401 });
     }

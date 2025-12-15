@@ -38,6 +38,7 @@ interface Task {
   commentDetail: any | null;
   canAccept: boolean | null;
   cannotAcceptReason: string | null;
+  submittedLinkUrl: string | null;
 }
 
 // API响应类型
@@ -268,7 +269,7 @@ export default function CompletedTabPage() {
             onClick={(e) => {
               e.preventDefault();
               // 复制评论
-              handleCopyComment(task.commentDetail || '');
+              handleCopyComment(task.submittedLinkUrl || '');
               // 设置当前视频URL并打开模态框
               setCurrentVideoUrl('https://v.douyin.com/oiunFce071s/');
               setIsModalOpen(true);
@@ -307,8 +308,8 @@ export default function CompletedTabPage() {
     );
   };
 
-  // 获取过滤和搜索后的订单 - 默认按时间排序
-  const filteredTasks = searchOrders(filterRecentOrders(tasks)).sort((a, b) => {
+  // 获取过滤和搜索后的订单 - 默认按时间排序，不再过滤最近7天的订单
+  const filteredTasks = searchOrders(tasks).sort((a, b) => {
     const dateA = a.createTime ? new Date(a.createTime).getTime() : 0;
     const dateB = b.createTime ? new Date(b.createTime).getTime() : 0;
     return dateB - dateA;
@@ -346,9 +347,7 @@ export default function CompletedTabPage() {
           {tooltipMessage}
         </div>
       )}
-      
 
-      
       {/* 使用标准模板组件 - 移除排序功能 */}
       <OrderHeaderTemplate
         title="已完成的订单"

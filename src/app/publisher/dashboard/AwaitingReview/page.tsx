@@ -17,15 +17,15 @@ interface ApiResponse<T> {
   timestamp: number;
 }
 
-interface PaginationData {
-  list: PendingOrder[];
+interface AwaitingReviewData {
+  list: AwaitingReviewOrder[];
   total: number;
   page: number;
   size: number;
   pages: number;
 }
 
-interface PendingOrder {
+interface AwaitingReviewOrder {
   id: string;
   mainTaskId: string;
   mainTaskTitle: string;
@@ -83,13 +83,13 @@ interface PendingOrder {
   secondGroupImages: string;
 }
 
-interface AuditTabPageProps {
-  pendingOrders: PendingOrder[];
-  paginationData: PaginationData | null;
+interface AwaitingReviewTabPageProps {
+  awaitingReviewOrders: AwaitingReviewOrder[];
+  awaitingReviewData: AwaitingReviewData | null;
   loading: boolean;
 }
 
-export default function AuditTabPage({ pendingOrders, paginationData, loading }: AuditTabPageProps) {
+export default function AwaitingReviewTabPage({ awaitingReviewOrders, awaitingReviewData, loading }: AwaitingReviewTabPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +106,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
   const [rejectReason, setRejectReason] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState('');
   const [verificationNotes, setVerificationNotes] = useState<{[key: string]: string}>({});
-  const [currentOrder, setCurrentOrder] = useState<PendingOrder | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<AwaitingReviewOrder | null>(null);
   // 图片查看器状态
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
@@ -116,7 +116,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
   // 处理搜索函数已在其他位置定义
 
   // 处理订单审核
-  const handleOrderReview = (order: PendingOrder, action: string) => {
+  const handleOrderReview = (order: AwaitingReviewOrder, action: string) => {
     setCurrentOrderId(order.id);
     setCurrentOrder(order);
     if (action === 'approve') {
@@ -130,9 +130,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
   // 确认审核通过
   const confirmApprove = async () => {
     if (!currentOrder) return;
-    
     try {
-      
       // 构建请求参数
       const requestData = {
         subTaskId: currentOrderId,
@@ -174,17 +172,6 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
     }
     
     try {
-      // 在实际应用中，这里应该调用API进行驳回操作
-      // const response = await fetch('/api/verify/reject', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ orderId: currentOrderId, reason: rejectReason }),
-      // });
-      // const data = await response.json();
-      
-      // 模拟API延迟
       await new Promise(resolve => setTimeout(resolve, 500));
       
       showCopySuccess('订单已驳回');
@@ -219,7 +206,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
   };
 
   // 搜索订单
-  const searchOrders = (orders: PendingOrder[]) => {
+  const searchOrders = (orders: AwaitingReviewOrder[]) => {
     if (!searchTerm.trim()) return orders;
     
     return orders.filter(order => 
@@ -281,7 +268,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
   };
 
   // 获取过滤和搜索后的订单
-  const filteredOrders = sortAuditTasks(searchOrders(filterRecentOrders(pendingOrders)));
+  const filteredOrders = sortAuditTasks(searchOrders(filterRecentOrders(awaitingReviewOrders)));
   
   // 处理搜索
   const handleSearch = () => {
@@ -301,7 +288,7 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
       {/* 使用标准模板组件 */}
       <OrderHeaderTemplate
         title="待审核的订单"
-        totalCount={paginationData?.total || pendingOrders.length}
+        totalCount={awaitingReviewData?.total || awaitingReviewOrders.length}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         handleSearch={handleSearch}
@@ -413,16 +400,22 @@ export default function AuditTabPage({ pendingOrders, paginationData, loading }:
           <div className="mb-1 bg-blue-50 border border-blue-500 py-2 px-3 rounded-lg">
             <p className='mb-1  text-sm text-blue-600'>已完成评论点击进入：</p>
             <a 
-              href="http://localhost:3000/publisher/dashboard?tab=active" 
+              href={order.submittedLinkUrl || ''} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center"
               onClick={(e) => {
                 e.preventDefault();
-                // 复制评论
-                handleCopyComment(order.submittedComment || '');
+                // 复制视频链接
+                if (order.submittedLinkUrl) {
+                  navigator.clipboard.writeText(order.submittedLinkUrl).then(() => {
+                    showCopySuccess('视频链接已复制');
+                  }).catch(() => {
+                    // 静默处理复制失败
+                  });
+                }
                 // 设置当前视频URL并打开模态框
-                setCurrentVideoUrl('https://www.douyin.com');
+                setCurrentVideoUrl('https://v.douyin.com/oiunFce071s/');
                 setIsModalOpen(true);
               }}
             >

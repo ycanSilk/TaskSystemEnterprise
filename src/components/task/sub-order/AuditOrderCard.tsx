@@ -17,6 +17,7 @@ interface AuditOrderCardProps {
     status: string;
     orderNumber?: string;
     updatedTime?: string;
+    submittedLinkUrl?: string;
   };
   onCopyOrderNumber: (orderNumber: string) => void;
   onOrderReview: (orderId: string, action: 'approve' | 'reject') => void;
@@ -170,19 +171,41 @@ const AuditOrderCard: React.FC<AuditOrderCardProps> = ({
 
       <div className="mb-2 bg-blue-50 border border-blue-500 py-2 px-3 rounded-lg">
         <p className='mb-2  text-sm text-blue-600'>已完成评论点击进入：</p>
-        <a 
-          href="http://localhost:3000/publisher/dashboard?tab=active" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center"
-          onClick={(e) => {
-            e.preventDefault();
-            // 在实际应用中，这里应该跳转到抖音视频页面
-            window.open('https://www.douyin.com', '_blank');
-          }}
-        >
-          <span className="mr-1">⦿</span> 打开视频
-        </a>
+        <div className="flex items-center gap-2">
+          <a 
+            href={order.submittedLinkUrl || '#'} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center"
+          >
+            <span className="mr-1">⦿</span> 打开视频
+          </a>
+          {order.submittedLinkUrl && (
+            <button
+              className="bg-gray-600 text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center"
+              onClick={() => {
+                // 确保submittedLinkUrl存在
+                if (order.submittedLinkUrl) {
+                  navigator.clipboard.writeText(order.submittedLinkUrl).then(() => {
+                    // 创建临时提示元素
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                    tooltip.innerText = '链接已复制';
+                    document.body.appendChild(tooltip);
+                    // 2秒后移除提示
+                    setTimeout(() => {
+                      document.body.removeChild(tooltip);
+                    }, 2000);
+                  }).catch(() => {
+                    // 静默处理复制失败
+                  });
+                }
+              }}
+            >
+              <span className="mr-1">📋</span> 复制链接
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 截图显示区域 - 自适应高度，居中显示 */}

@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 // 导入四个对应状态的页面组件
-import OverviewTabPage from './overview/page';
-import ActiveTabPage from './active/page';
-import AuditTabPage from './audit/page';
-import CompletedTabPage from './completed/page';
+import OverviewTabPage from './OverView/page';
+import ActiveTabPage from './InProgress/page';
+import AwaitingReviewTabPage from './AwaitingReview/page';
+import CompletedTabPage from './Completed/page';
 
 // 定义API响应数据类型
 interface TaskStatsData {
@@ -237,25 +237,25 @@ export default function PublisherDashboardPage() {
       {/* 只保留这4个切换按钮的布局和框架 */}
       <div className="mx-4 mt-4 grid grid-cols-4 gap-1">
         <button
-          onClick={() => handleTabChange('overview')}
-          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'overview' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
+          onClick={() => handleTabChange('OverView')}
+          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'OverView' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
         >
           概览
         </button>
         <button
-          onClick={() => handleTabChange('active')}
-          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'active' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
+          onClick={() => handleTabChange('InProgress')}
+          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'InProgress' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
         >
           <div className="flex flex-col items-center">
-            <div className={activeTab === 'active' ? 'text-lg font-bold text-white' : 'text-lg font-bold text-blue-500'}>
+            <div className={activeTab === 'active' ? 'text-lg font-bold text-white' : 'text-lg font-bold text-white-500'}>
               {orderStats.acceptedCount}
             </div>
             <span>进行中</span>
           </div>
         </button>
         <button
-          onClick={() => handleTabChange('audit')}
-          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'audit' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
+          onClick={() => handleTabChange('AwaitingReview')}
+          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'AwaitingReview' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
         >
           <div className="flex flex-col items-center">
             <div className={activeTab === 'audit' ? 'text-lg font-bold text-white' : 'text-lg font-bold text-orange-500'}>
@@ -265,11 +265,11 @@ export default function PublisherDashboardPage() {
           </div>
         </button>
         <button
-          onClick={() => handleTabChange('completed')}
-          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'completed' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
+          onClick={() => handleTabChange('Completed')}
+          className={`py-3 px-2 rounded text-sm font-medium transition-colors ${activeTab === 'Completed' ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-gray-300 text-gray-600 hover:bg-blue-50'}`}
         >
           <div className="flex flex-col items-center">
-            <div className={activeTab === 'completed' ? 'text-lg font-bold text-white' : 'text-lg font-bold text-green-500'}>
+            <div className={activeTab === 'Completed' ? 'text-lg font-bold text-white' : 'text-lg font-bold text-green-500'}>
               {orderStats.completedCount}
             </div>
             <span>已完成</span>
@@ -280,7 +280,7 @@ export default function PublisherDashboardPage() {
       
 
       {/* 直接嵌入4个对应状态的页面组件 */}
-      {activeTab === 'overview' && (
+      {activeTab === 'OverView' && (
         <OverviewTabPage 
           taskStats={taskStats} 
           loading={loading} 
@@ -288,15 +288,15 @@ export default function PublisherDashboardPage() {
           orderStats={orderStats}
         />
       )}
-      {activeTab === 'active' && <ActiveTabPage />}
-      {activeTab === 'audit' && (
-        <AuditTabPage 
-          pendingOrders={pendingOrders}
-          paginationData={pendingOrdersPagination}
+      {activeTab === 'InProgress' && <ActiveTabPage />}
+      {activeTab === 'AwaitingReview' && (
+        <AwaitingReviewTabPage 
+          awaitingReviewOrders={pendingOrders}
+          awaitingReviewData={pendingOrdersPagination}
           loading={loading}
         />
       )}
-      {activeTab === 'completed' && <CompletedTabPage />}
+      {activeTab === 'Completed' && <CompletedTabPage />}
     </div>
   );
 }
