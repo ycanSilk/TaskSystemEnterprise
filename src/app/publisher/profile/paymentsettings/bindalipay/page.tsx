@@ -32,8 +32,12 @@ const BindAlipayPage: React.FC = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     
+    // 手机号验证：必须是11位数字
+    const phoneRegex = /^1\d{10}$/;
     if (!formData.alipayAccount.trim()) {
       newErrors.alipayAccount = '请输入支付宝账号';
+    } else if (!phoneRegex.test(formData.alipayAccount.trim())) {
+      newErrors.alipayAccount = '请输入11位正确的手机号码';
     }
     
     if (!formData.realName.trim()) {
@@ -98,13 +102,15 @@ const BindAlipayPage: React.FC = () => {
                 支付宝账号 <span className="text-red-500">*</span>
               </label>
               <input
-                type="text"
+                type="tel"
                 id="alipayAccount"
                 name="alipayAccount"
                 value={formData.alipayAccount}
                 onChange={handleInputChange}
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.alipayAccount ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="请输入支付宝账号"
+                placeholder="请输入11位手机号码"
+                pattern="[0-9]*"
+                inputMode="numeric"
               />
               {errors.alipayAccount && (
                 <p className="mt-1 text-sm text-red-500">{errors.alipayAccount}</p>
@@ -128,6 +134,7 @@ const BindAlipayPage: React.FC = () => {
               {errors.realName && (
                 <p className="mt-1 text-sm text-red-500">{errors.realName}</p>
               )}
+              <div className='text-sm text-red-500'>*请输入绑定支付宝的真实姓名，防止充值失败</div>
             </div>
 
             {/* 安全提示 */}

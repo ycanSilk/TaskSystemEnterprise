@@ -57,7 +57,6 @@ export const decryptRoute = (encryptedPath: string): string => {
  * @returns 是否已加密
  */
 export const isEncryptedRoute = (path: string): boolean => {
-  
   // 排除已知的静态资源路径
   const staticPaths = ['images', 'database', 'software', 'uploads', '_next', 'api'];
   if (staticPaths.includes(path)) {
@@ -89,6 +88,8 @@ export const isEncryptedRoute = (path: string): boolean => {
   } catch (error) {
     return false;
   }
+
+  return base64UrlPattern.test(path);
 };
 
 /**
@@ -115,7 +116,6 @@ export const encryptUrlFirstTwoLevels = (url: string): string => {
       const result = parsedUrl.toString();
       return result;
     }
-    
     return url;
   } catch (error) {
     return url;
@@ -144,7 +144,6 @@ export const decryptUrlFirstTwoLevels = (url: string): string => {
       const result = parsedUrl.toString();
       return result;
     }
-    
     return url;
   } catch (error) {
     return url;

@@ -18,7 +18,6 @@ export async function GET(request: Request) {
     }
     
     if (!token) {
-      console.warn(`${operation} 认证失败: token无效`);
       return NextResponse.json({ success: false, message: '认证失败，请先登录' }, { status: 401 });
     }
     
@@ -42,12 +41,7 @@ export async function GET(request: Request) {
     try {
       const responseText = await response.text();
       responseData = JSON.parse(responseText);
-      console.log("这是获取任务统计数据的API返回的日志输出:", apiUrl);
-      console.log("这是获取任务统计数据的API返回的日志输出:", token);
-      console.log('这是获取任务统计数据的API返回的日志输出:', response);
-      console.log('任务统计数据:', responseData.data);
     } catch (jsonError) {
-      console.error(`${operation} 错误: API响应解析失败 - ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
       return NextResponse.json(
         { success: false, message: '外部API返回无效响应' },
         { status: 500 }

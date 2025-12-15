@@ -13,6 +13,7 @@ export default function PublisherLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [captchaCode, setCaptchaCode] = useState('');
+  const [countdown, setCountdown] = useState(60);
   const router = useRouter();
   
   // 生成随机验证码
@@ -29,18 +30,33 @@ export default function PublisherLoginPage() {
   const refreshCaptcha = () => {
     setCaptchaCode(generateCaptcha());
     setFormData(prev => ({ ...prev, captcha: '' }));
+    // 重置倒计时
+    setCountdown(60);
   };
 
   // 只在客户端生成验证码，避免SSR和客户端渲染不匹配
   useEffect(() => {
     setCaptchaCode(generateCaptcha());
+
+    // 设置1秒倒计时定时器
+    const countdownTimer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          refreshCaptcha();
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // 组件卸载时清除定时器
+    return () => clearInterval(countdownTimer);
   }, []);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    
     // 用户名校验
     if (!formData.username || formData.username.trim() === '') {
       setErrorMessage('请输入用户名');
@@ -80,14 +96,16 @@ export default function PublisherLoginPage() {
         }),
         credentials: 'include' // 确保携带cookie
       });
+
      
       // 解析响应数据
       const result = await response.json();
+      
       if (response.ok) {
         // 请求成功（状态码200）
-        if (result.success) {         
+        if (result.success) {
           router.push('/publisher/dashboard');
-        } else {         
+        } else {
           setErrorMessage(result.message || '登录失败，请检查输入信息');
           refreshCaptcha();
         }
@@ -102,22 +120,18 @@ export default function PublisherLoginPage() {
             break;
           default:
             errorMsg = result.message || `登录失败，状态码: ${response.status}`;
-        }
-        
+        }       
         setErrorMessage(errorMsg);
         // 错误时刷新验证码
         refreshCaptcha();
       }
-      
     } catch (error) {
       setErrorMessage('网络连接失败，请检查网络设置后重试');
-      // 错误时刷新验证码
       refreshCaptcha();
     } finally {
       setIsLoading(false);
     }
-  };
-
+  }
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* 顶部装饰 */}
@@ -150,7 +164,6 @@ export default function PublisherLoginPage() {
                   placeholder="请输入用户名"
                   value={formData.username}
                   onChange={(e) => {
-                    console.log('[PublisherLoginPage] 用户名更改为:', e.target.value);
                     setFormData({...formData, username: e.target.value});
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -168,7 +181,6 @@ export default function PublisherLoginPage() {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={(e) => {
-                    console.log('[PublisherLoginPage] 密码已更改（出于安全考虑未记录值）');
                     setFormData({...formData, password: e.target.value});
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -186,7 +198,6 @@ export default function PublisherLoginPage() {
                     placeholder="请输入验证码"
                     value={formData.captcha}
                     onChange={(e) => {
-                      console.log('[PublisherLoginPage] 验证码更改为:', e.target.value);
                       setFormData({...formData, captcha: e.target.value});
                     }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -198,7 +209,7 @@ export default function PublisherLoginPage() {
                     {captchaCode}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">点击验证码可刷新</p>
+                <p className="text-xs text-gray-500 mt-1">点击验证码可刷新，验证码还剩 {countdown} 秒自动刷新</p>
               </div>
 
               {/* 错误信息 */}
@@ -228,7 +239,6 @@ export default function PublisherLoginPage() {
                 还没有账户？{' '}
                 <button 
                   onClick={() => {
-                    console.log('[PublisherLoginPage] 注册按钮被点击');
                     router.push('/publisher/auth/register');
                   }}
                   className="text-blue-500 hover:underline"
@@ -237,7 +247,6 @@ export default function PublisherLoginPage() {
                 </button>
                 <button 
                   onClick={() => {
-                    console.log('[PublisherLoginPage] 忘记密码按钮被点击');
                     router.push('/publisher/auth/resetpwd');
                   }}
                   className="text-blue-500 hover:underline ml-3"
@@ -253,8 +262,6 @@ export default function PublisherLoginPage() {
             <p>©2025 微任务系统平台 V1.0</p>
           </div>
         </div>
-        
-        {/* 登录成功后将直接跳转 */}
       </div>
     </div>
   );

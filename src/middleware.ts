@@ -25,7 +25,12 @@ export function middleware(request: NextRequest) {
       // 返回重定向到解密后的路由
       return NextResponse.rewrite(newUrl);
     } catch (error) {
+
       return NextResponse.next();
+
+      // 如果解密失败，返回404错误
+      return new NextResponse('Not Found', { status: 404 });
+
     }
   }
 
@@ -57,11 +62,11 @@ export function middleware(request: NextRequest) {
         response.headers.set('x-from-middleware', '1');
         return response;
       } catch (error) {
-
         return NextResponse.next();
       }
     }
   }
+
 
   return NextResponse.next();
 }

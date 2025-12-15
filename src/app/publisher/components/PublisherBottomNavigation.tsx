@@ -29,7 +29,9 @@ export const PublisherBottomNavigation: React.FC = () => {
       label: '发布评论',
       path: '/publisher/create/platformtype'
     },
-    {      icon: <WalletOutlined />,      label: '租赁市场',      path: '/accountrental/account-rental-market?from=publisher-dashboard'    },
+    { icon: <WalletOutlined />, 
+      label: '租赁市场', 
+      path: '/accountrental/account-rental-market?from=publisher-dashboard' },
     {
       icon: <UserOutlined />,
       label: '我的',

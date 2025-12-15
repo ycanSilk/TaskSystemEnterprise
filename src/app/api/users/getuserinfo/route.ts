@@ -38,8 +38,6 @@ export async function GET(request: Request) {
   const operation = 'GET_USER_INFO';
   
   try {
-    console.log(formatLog(operation, '开始处理获取用户信息请求'));
-    
     // 获取token - 只从HttpOnly Cookie获取，这是更安全的认证方式
     let token = '';
     
@@ -48,14 +46,11 @@ export async function GET(request: Request) {
       const cookieStore = await cookies();
       const cookieToken = cookieStore.get('PublishTask_token');
       token = cookieToken?.value || '';
-      console.log(formatLog(operation, `从Cookie获取token: ${token ? '已获取到token' : '未获取到token'}`));
     } catch (cookieError) {
-      console.error(formatLog(operation, `无法从Cookie获取token: ${(cookieError as Error).message}`));
     }
     
     // 验证token有效性
     if (!token || token.trim() === '') {
-      console.warn(formatLog(operation, 'Token验证失败：token为空或无效'));
       return NextResponse.json({
         code: 401,
         message: '未登录，请先登录',
@@ -77,50 +72,35 @@ export async function GET(request: Request) {
       ...defaultHeaders,
       'Authorization': `Bearer ${token}`
     };
-    
-    // 输出详细的请求参数日志
-    console.log(formatLog(operation, '准备调用外部API获取用户信息'));
-    console.log(formatLog(operation, `请求URL: ${apiUrl}`));
-    console.log(formatLog(operation, `请求超时: ${timeout}ms`));
-    console.log(formatLog(operation, `请求头: ${JSON.stringify(requestHeaders)}`));
-    
-    // 调用外部API获取用户信息
-    console.log(formatLog(operation, '开始调用外部API'));
+
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: requestHeaders,
       signal: AbortSignal.timeout(timeout)
     });
     
-    // 输出响应状态码和响应头日志
-    console.log(formatLog(operation, `外部API响应状态码: ${response.status} ${response.statusText}`));
-    
     // 转换响应头为对象以便记录
     const responseHeaders: Record<string, string> = {};
     response.headers.forEach((value, key) => {
       responseHeaders[key] = value;
     });
-    console.log(formatLog(operation, `外部API响应头: ${JSON.stringify(responseHeaders)}`));
+  
     
     // 获取响应数据
     const responseData = await response.json();
-    console.log(formatLog(operation, `外部API返回的完整JSON响应: ${JSON.stringify(responseData)}`));
+
     
     // 处理非成功响应
     if (!response.ok) {
       const errorMessage = responseData.message || responseData.error || `外部服务错误: ${response.status}`;
       const errorCode = responseData.code || response.status;
-      
-      console.warn(formatLog(operation, `外部API调用失败: ${errorMessage} (状态码: ${errorCode})`));
       return NextResponse.json({
         code: errorCode,
         message: errorMessage,
         success: false
       }, { status: response.status });
     }
-    
-    console.log(formatLog(operation, '外部API调用成功'));
-    
+
     // 从responseData.data中获取用户信息
     const apiUserData = responseData.data || responseData;
     
@@ -149,7 +129,6 @@ export async function GET(request: Request) {
       timestamp: Date.now()
     };
     
-    console.log(formatLog(operation, `返回给客户端的响应数据: ${JSON.stringify(finalResponse)}`));
     return NextResponse.json(finalResponse);
   } catch (error) {
     // 异常处理
@@ -167,7 +146,6 @@ export async function GET(request: Request) {
         errorMessage = '无法解析API响应数据';
         statusCode = 502;
       }
-      console.error(formatLog(operation, `发生异常: ${error.name}: ${error.message}`));
     } else {
       console.error(formatLog(operation, `发生未知异常: ${String(error)}`));
     }
@@ -178,7 +156,6 @@ export async function GET(request: Request) {
       success: false
     };
     
-    console.log(formatLog(operation, `返回错误响应: ${JSON.stringify(errorResponse)}`));
     return NextResponse.json(errorResponse, { status: statusCode });
   }
 }

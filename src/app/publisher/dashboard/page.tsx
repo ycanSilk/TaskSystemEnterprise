@@ -223,7 +223,6 @@ export default function PublisherDashboardPage() {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '网络请求失败，请稍后重试');
-        console.error('获取任务统计数据失败:', err);
       } finally {
         setLoading(false);
       }
