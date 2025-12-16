@@ -25,6 +25,15 @@ export interface LeaseInfo {
   images?: string[];
 }
 
+export interface CreateLeaseOrderResponseData {
+  id: string;
+  userId: string;
+  leaseInfoId: string;
+  lessorId: string;
+  renterId: string;
+  orderNo: string;
+}
+
 // 定义API响应数据类型
 export interface ApiResponse<T> {
   code: number;
@@ -89,10 +98,27 @@ const AccountDetailPage = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentPassword, setPaymentPassword] = useState('');
+  const [password, setpassword] = useState('');
   const [orderId, setOrderId] = useState('');
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  
+  // Toast提示框状态
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'loading'>('success');
+  const [toastMessage, setToastMessage] = useState('');
+  
+  // 显示Toast提示
+  const showToast = (type: 'success' | 'error' | 'loading', message: string, duration: number = 2000) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+    
+    // 自动隐藏
+    setTimeout(() => {
+      setToastVisible(false);
+    }, duration);
+  };
   const [leaseDays, setLeaseDays] = useState<number>(0);
   
   // 当leaseInfo加载完成后，可以根据需要设置默认租赁天数，但允许用户修改为0
@@ -102,7 +128,6 @@ const AccountDetailPage = ({
       setLeaseDays(leaseInfo.minLeaseDays);
     }
   }, [leaseInfo?.minLeaseDays]);
-  
   // 创建租赁订单
   const createLeaseOrder = async (leaseInfoId: string, leaseDays: number) => {
     try {
@@ -123,6 +148,7 @@ const AccountDetailPage = ({
       }
       
       const data = await response.json();
+      console.log('创建订单API响应:', data.data.orderNo);
       return data;
     } catch (error) {
       console.error('创建租赁订单失败:', error);
@@ -130,17 +156,20 @@ const AccountDetailPage = ({
     }
   };
 
-  // 支付租赁订单
-  const payLeaseOrder = async (orderId: string): Promise<boolean> => {
+
+   // 支付租赁订单
+  const payLeaseOrder = async (orderId: CreateLeaseOrderResponseData["id"]): Promise<ApiResponse<unknown>> => {
     try {
-      const response = await fetch('/api/rental/paymentleaseorder', {
+      
+      const response = await fetch(`/api/rental/paymentleaseorder?orderId=${orderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ orderId })
+        }
       });
-      
+      console.log('正在发送支付请求，orderId:', orderId);
+      console.log('到这一步可以确定传递的orderId是正确的。并且支付订单API响应状态:', response.status);
+      console.log('支付订单API响应内容:', await response.clone().json());
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || '支付失败');
@@ -153,6 +182,7 @@ const AccountDetailPage = ({
       throw error;
     }
   };
+ 
 
   // 处理立即租赁
   const handleRentNow = async () => {
@@ -168,13 +198,13 @@ const AccountDetailPage = ({
       
       console.log('创建订单API响应:', result);
       
-      // 根据API返回的数据结构，订单ID是orderNo字段
-      let orderNo = null;
-      if (result && result.success && result.data && result.data.orderNo) {
-        orderNo = result.data.orderNo;
-        console.log('获取到订单号orderNo:', orderNo);
-        // 保存订单号
-        setOrderId(orderNo);
+      // 根据API返回的数据结构，订单ID是id字段
+      let orderId = null;
+      if (result && result.success && result.data && result.data.id) {
+        orderId = result.data.id;
+        console.log('获取到订单ID:', orderId);
+        // 保存订单ID
+        setOrderId(orderId);
         // 显示支付密码模态框
         console.log('设置显示支付模态框为true');
         setShowPaymentModal(true);
@@ -182,12 +212,12 @@ const AccountDetailPage = ({
         // 更宽容地处理可能的不同响应格式
         if (result && result.data && result.data.id) {
           // 如果找不到orderNo但有id，使用id作为后备
-          orderNo = result.data.id;
-          console.log('使用id作为后备订单ID:', orderNo);
-          setOrderId(orderNo);
+          orderId = result.data.id;
+          console.log('使用id作为后备订单ID:', orderId);
+          setOrderId(orderId);
           setShowPaymentModal(true);
         } else {
-          throw new Error(result?.message || '创建订单失败，未找到订单号');
+          throw new Error(result?.message || '创建订单失败，未找到订单ID');
         }
       }
     } catch (error) {
@@ -201,7 +231,7 @@ const AccountDetailPage = ({
   // 处理取消支付
   const handleCancelPayment = () => {
     setShowPaymentModal(false);
-    setPaymentPassword('');
+    setpassword('');
     setOrderId('');
     // 取消后跳转到租赁订单页面
     window.location.href = '/accountrental/my-account-rental/myrentedorder';
@@ -209,32 +239,68 @@ const AccountDetailPage = ({
 
   // 处理确认支付
   const handleConfirmPayment = async () => {
-    if (!orderId || paymentPassword.length !== 6 || apiLoading) return;
+    if (!orderId || password.length !== 6 || apiLoading) return;
     
     try {
       setApiLoading(true);
       setApiError('');
       
-      // 支付订单
-      const result: boolean = await payLeaseOrder(orderId);
+      // 1. 首先显示验证中提示
+      showToast('loading', '验证支付密码中...', 0);
       
-      console.log('支付结果:', result);
+      // 2. 验证支付密码
+      const validateResponse = await fetch(`/api/walletmanagement/verificationpwd?password=${password}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      const validateData = await validateResponse.json();
+      
+      if (!validateResponse.ok || !validateData.success) {
+        showToast('error', validateData.message || '支付密码验证失败');
+        throw new Error(validateData.message || '支付密码验证失败');
+      }
+      
+      // 3. 密码验证成功，显示支付中提示
+      showToast('loading', '支付处理中...', 0);
+      
+      // 4. 支付订单
+      const result: ApiResponse<unknown> = await payLeaseOrder(orderId);
+
+      console.log('支付订单API响应:', result);
       // 检查是否成功
-      if (result) {
-        // 支付成功，关闭模态框并显示成功提示
+      if (result.success) {
+        // 支付成功，显示成功提示
         setShowPaymentModal(false);
-        alert('支付成功！正在跳转到订单页面...');
-        // 跳转到租赁订单页面
-        window.location.href = '/app/accountrental/my-account-rental/rentalorder';
+        showToast('success', '支付成功！正在跳转到订单页面...', 1500);
+        
+        // 延迟跳转到订单页面，让用户看到成功提示
+        setTimeout(() => {
+          window.location.href = '/app/accountrental/my-account-rental/rentalorder';
+        }, 1500);
       } else {
-        throw new Error('支付失败');
+        showToast('error', result.message || '支付失败');
+        throw new Error(result.message || '支付失败');
       }
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : '支付失败，请稍后重试');
+      const errorMsg = error instanceof Error ? error.message : '支付失败，请稍后重试';
+      setApiError(errorMsg);
+      if (!toastVisible) {
+        showToast('error', errorMsg);
+      }
     } finally {
       setApiLoading(false);
+      // 确保Toast在操作完成后隐藏
+      if (toastType === 'loading') {
+        setToastVisible(false);
+      }
     }
   };
+
+  
   
   // 组件挂载时获取数据
   useEffect(() => {
@@ -395,6 +461,64 @@ const AccountDetailPage = ({
 
     return (
       <div className="min-h-screen bg-gray-50">
+        {/* Toast提示框 */}
+        {toastVisible && (
+          <div 
+            className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none`}
+          >
+            <div 
+              className={`flex items-center px-6 py-4 rounded-lg shadow-lg bg-white bg-opacity-90 animate-fadeInUp`}
+              style={{ animation: 'fadeInUp 0.3s ease-out' }}
+            >
+              {/* 加载图标 */}
+              {toastType === 'loading' && (
+                <div className="animate-spin mr-3">
+                  <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              )}
+              
+              {/* 成功图标 */}
+              {toastType === 'success' && (
+                <div className="mr-3 text-green-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              
+              {/* 错误图标 */}
+              {toastType === 'error' && (
+                <div className="mr-3 text-red-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                    <line x1="15" y1="9" x2="9" y2="15" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                    <line x1="9" y1="9" x2="15" y2="15" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                  </svg>
+                </div>
+              )}
+              
+              {/* 提示文字 */}
+              <span className="text-gray-800 font-medium">{toastMessage}</span>
+            </div>
+          </div>
+        )}
+        
+        {/* 添加CSS动画 */}
+        <style jsx>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
         {/* 主内容区域 */}
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -536,16 +660,18 @@ const AccountDetailPage = ({
                       <h2 className="text-xl font-bold mb-4 text-center">支付确认</h2>
                       
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">支付密码</label>
+                        <label className="block text-sm font-medium mb-1">请输入支付密码</label>
+                        <label className="block text-sm font-medium text-red-500 mb-1">*如果无支付密码或忘记支付密码，点击此处重置支付密码</label>
+                        <a href="/accountrental/paymentsettings/setpaymentpwd" className="text-blue-500 hover:underline mb-1">设置/重置支付密码</a>
                         <input
                           type="password"
                           placeholder="请输入支付密码"
-                          value={paymentPassword}
-                          onChange={(e) => setPaymentPassword(e.target.value)}
+                          value={password}
+                          onChange={(e) => setpassword(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           maxLength={6}
                         />
-                        {paymentPassword.length > 0 && paymentPassword.length !== 6 && (
+                        {password.length > 0 && password.length !== 6 && (
                           <p className="text-red-500 text-xs mt-1">支付密码为6位</p>
                         )}
                       </div>
@@ -562,7 +688,7 @@ const AccountDetailPage = ({
                         <Button 
                           className="flex-1 bg-blue-500 hover:bg-blue-600 text-white" 
                           onClick={handleConfirmPayment}
-                          disabled={apiLoading || paymentPassword.length !== 6}
+                          disabled={apiLoading || password.length !== 6}
                         >
                           {apiLoading ? '支付中...' : '确认支付'}
                         </Button>

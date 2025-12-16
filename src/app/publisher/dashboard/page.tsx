@@ -55,14 +55,14 @@ interface ApiResponse<T> {
 
 export default function PublisherDashboardPage() {
   const searchParams = useSearchParams();
-  const tabFromUrl = searchParams?.get('tab') || 'overview';
+  const tabFromUrl = searchParams?.get('tab') || 'OverView';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   // 确保页面加载时默认显示tab=overview参数
   useEffect(() => {
     if (!searchParams?.has('tab')) {
       const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('tab', 'overview');
+      newUrl.searchParams.set('tab', 'OverView');
       window.history.replaceState({}, '', newUrl.toString());
     }
   }, []);
