@@ -21,22 +21,21 @@ export async function POST(request: Request) {
   
   // 从URL查询参数中获取orderId
   const url = new URL(request.url);
-  const orderId = url.searchParams.get('orderId');
-  console.log('orderId:', orderId);
-  if (!orderId) {
-    console.log('缺少必要参数orderId');
-    return NextResponse.json({ success: false, message: '缺少必要参数orderId' }, { status: 400 });
-  }
+  const orderId = url.searchParams.get('orderNo');
+  console.log('orderNo:', orderId);
+ 
   
   // 构造请求URL，将orderId和reason参数添加到URL中
-  const apiUrl = `http://localhost:8083/api/rental/orders/${orderId}/pay`;
+  const apiUrl = `${config.apiBaseUrl}/api/rental/orders/${orderId}/pay`;
+  console.log('调用的支付订单API URL:', apiUrl);
   
   // 直接调用外部API并返回原始响应
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
     });
 
@@ -51,9 +50,10 @@ export async function POST(request: Request) {
     // 直接返回API的原始响应
     return NextResponse.json(responseData, { status: response.status });
   } catch (apiError) {
+    console.error('外部支付API调用失败:', apiError);
     return NextResponse.json({ 
       success: false, 
-      message: '获取交易记录失败，请稍后重试' 
+      message: '支付处理失败，请稍后重试' 
     }, { status: 500 });
   }
 }

@@ -9,25 +9,13 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: Request) {
   try {
-    // 1. 从请求头中获取Authorization字段，验证Bearer令牌
-    const authorizationHeader = request.headers.get('Authorization');
+
     
     // 从Cookie中获取token作为备选
     const cookieStore = await cookies();
-    const tokenKeys = ['PublishTask_token'];
-    let token: string | undefined;
-    
-    // 优先从Authorization头获取token
-    if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
-      token = authorizationHeader.split(' ')[1];
-    } 
-    // 如果Authorization头中没有token，则尝试从Cookie中获取
-    else {
-      for (const key of tokenKeys) {
-        token = cookieStore.get(key)?.value;
-        if (token) break;
-      }
-    }
+    const cookieToken = cookieStore.get('PublishTask_token');
+    let token = '';
+    token = cookieToken?.value || '';
     
     // 验证token是否存在
     if (!token) {
@@ -40,7 +28,7 @@ export async function POST(request: Request) {
     // 2. 从URL查询参数中获取password参数
     const url = new URL(request.url);
     const password = url.searchParams.get('password');
-    
+    console.log("前端传递过来的支付密码：", password);
     // 验证password参数是否存在
     if (!password) {
       return NextResponse.json(
@@ -50,15 +38,15 @@ export async function POST(request: Request) {
     }
     
     // 3. 调用外部API验证支付密码
-    const apiUrl = `${config.baseUrl}${config.endpoints.wallet.validatepwd}`;
+    const apiUrl = `${config.baseUrl}${config.endpoints.wallet.validatepwd}?password=${password}`;
+    console.log("调用的支付密码验证API URL:", apiUrl);
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         ...(config.headers || {})
-      },
-      body: JSON.stringify({ securityPassword: password })
+      }
     });
     
     // 4. 处理API响应

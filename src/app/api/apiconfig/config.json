@@ -36,7 +36,7 @@
       "setpaymentpwd": "/wallet/security-password",
       "withdraw": "/wallet/withdraw",
       "availablebalance": "/wallet/available-balance",
-      "validatepwd": "/wallet/validate-security-password?password=",
+      "validatepwd": "/wallet/validate-security-password",
       "transactionrecord": "/wallet/transactions",
       "usersrecharge": "/wallet/recharge"
     },
