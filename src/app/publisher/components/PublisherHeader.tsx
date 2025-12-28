@@ -329,7 +329,7 @@ export const PublisherHeader: React.FC<PublisherHeaderProps> = ({ user = null })
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      router.push('/auth/login/publisherlogin');
+      router.push('/publisher/auth/login');
     }
   };
 

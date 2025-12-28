@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 export default function PublisherStatsPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('OverView');
   const [dateRange, setDateRange] = useState('week'); // 'today' | 'week' | 'month'
   
   // 模拟数据

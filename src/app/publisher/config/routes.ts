@@ -9,10 +9,10 @@ export const routeTitleMap: Record<string, string> = {
   
   // Dashboard相关路由
   '/publisher/dashboard': '评论订单',
-  '/publisher/dashboard/active': '活跃任务',
-  '/publisher/dashboard/completed': '已完成任务',
-  '/publisher/dashboard/audit': '审核中任务',
-  '/publisher/dashboard/overview': '任务概览',
+  '/publisher/dashboard/InProgress': '活跃任务',
+  '/publisher/dashboard/Completed': '已完成任务',
+  '/publisher/dashboard/AwaitingReview': '审核中任务',
+  '/publisher/dashboard/OverView': '任务概览',
   '/publisher/dashboard/task-detail': '任务详情',
   '/publisher/dashboard/account-rental-detail': '账号租赁详情',
   

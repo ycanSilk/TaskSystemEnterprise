@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 // 导入四个对应状态的页面组件
-import OverviewTabPage from './OverView/page';
+import OverViewTabPage from './OverView/page';
 import ActiveTabPage from './InProgress/page';
 import AwaitingReviewTabPage from './AwaitingReview/page';
 import CompletedTabPage from './Completed/page';
@@ -55,14 +55,14 @@ interface ApiResponse<T> {
 
 export default function PublisherDashboardPage() {
   const searchParams = useSearchParams();
-  const tabFromUrl = searchParams?.get('tab') || 'overview';
+  const tabFromUrl = searchParams?.get('tab') || 'OverView';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
-  // 确保页面加载时默认显示tab=overview参数
+  // 确保页面加载时默认显示tab=OverView参数
   useEffect(() => {
     if (!searchParams?.has('tab')) {
       const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('tab', 'overview');
+      newUrl.searchParams.set('tab', 'OverView');
       window.history.replaceState({}, '', newUrl.toString());
     }
   }, []);
@@ -280,7 +280,7 @@ export default function PublisherDashboardPage() {
 
       {/* 直接嵌入4个对应状态的页面组件 */}
       {activeTab === 'OverView' && (
-        <OverviewTabPage 
+        <OverViewTabPage 
           taskStats={taskStats} 
           loading={loading} 
           error={error} 

@@ -28,9 +28,6 @@ export async function POST(request: Request) {
     if (requestData.sortOrder && !['ASC', 'DESC'].includes(requestData.sortOrder.toUpperCase())) {
       return NextResponse.json({ success: false, message: '排序方向必须是ASC或DESC' }, { status: 400 });
     }
-    
-
-    
     // 4. 构建API请求参数
     const apiUrl = `${config.baseUrl}${config.endpoints.task.mypublished}`;
     const requestParams = {

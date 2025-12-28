@@ -136,7 +136,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ user }) => {
       const parentPath = '/' + decryptedParts.slice(0, -1).join('/');
       router.push(getEncryptedPath(parentPath));
     } else {
-      router.push(getEncryptedPath('/publisher/dashboard?tab=overview'));
+      router.push(getEncryptedPath('/publisher/dashboard?tab=OverView'));
     }
   };
 

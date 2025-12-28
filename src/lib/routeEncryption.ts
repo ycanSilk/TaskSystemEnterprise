@@ -94,7 +94,7 @@ export const isEncryptedRoute = (path: string): boolean => {
 
 /**
  * 加密URL路径的前两级路由
- * @param url 完整的URL（例如：http://localhost:3000/publisher/dashboard?tab=overview）
+ * @param url 完整的URL（例如：http://localhost:3000/publisher/dashboard?tab=OverView
  * @returns 加密后的URL
  */
 export const encryptUrlFirstTwoLevels = (url: string): string => {
